@@ -146,8 +146,13 @@ def main():
     if not lanes or not code.strip():
         return 0
 
+    before = spend.snapshot()
     results, redacted = classify_lanes(
         lanes, code, f"scan-{payload.get('session_id') or 'unknown'}")
+    after_usd = spend.load()["total_usd"]
+    call_usd = after_usd - before["total_usd"]
+    print(f"guard: scan cost ~${call_usd:.6f} ({len(lanes)} lane(s)); total est. ${after_usd:.4f}",
+          file=sys.stderr)
     findings = [(lane, label, rid) for lane, label, rid in results
                 if label not in ("none", classifier.UNPARSEABLE, "error", "budget_exceeded")]
     for lane, label, rid in results:

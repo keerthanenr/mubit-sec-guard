@@ -75,14 +75,6 @@ def run_batch(lane, split, store=True, agree_only=False):
     return results
 
 
-def print_spend():
-    ledger = spend.load()
-    print("\nEst. spend per lane:")
-    for lane in config.LANES:
-        s = ledger["lanes"].get(lane, {})
-        print(f"  {lane:<10}{s.get('calls', 0):>5} calls  ${s.get('usd', 0.0):.4f}")
-    print(f"  {'total':<10}{'':>5}        ${ledger['total_usd']:.4f} of ${config.budget_usd():.2f} cap")
-
 
 def parse_args(description):
     parser = argparse.ArgumentParser(description=description)
@@ -105,6 +97,7 @@ def parse_args(description):
 if __name__ == "__main__":
     args = parse_args(__doc__)
     split = args.split or ("seed_extra" if args.extra else "seed")
+    before = spend.snapshot()
     for lane in args.lanes:
         if not data_path(lane, split).exists():
             print(f"== {lane}: no {split}.jsonl, skipped\n")
@@ -115,4 +108,4 @@ if __name__ == "__main__":
         flipped = sum(r["got"] != r["expected"] for r in recorded) if args.agree_only else 0
         print(f"  {lane}: {correct}/{len(results)} matched expected, {len(recorded)} recorded"
               + (f", {flipped} recorded answers differed from the check" if args.agree_only else "") + "\n")
-    print_spend()
+    spend.run_summary(before)
