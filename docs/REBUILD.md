@@ -1,6 +1,6 @@
 # Rebuilding the adapters in a new Mubit account
 
-This repo holds everything needed to recreate the 12 security lanes as Mubit tasks and retrain their adapters from scratch: the fixed lane instructions (`config.py`), all labelled datasets (`data/`), and the scripts. Nothing from the old account is needed. A full rebuild is about 3,300 Opus calls and roughly $5–6 of provider spend.
+This repo holds everything needed to recreate the 13 security lanes as Mubit tasks and retrain their adapters from scratch: the fixed lane instructions (`config.py`), all labelled datasets (`data/`), and the scripts. Nothing from the old account is needed. A full rebuild is about 3,300 Opus calls and roughly $5–6 of provider spend.
 
 ## 1. Mubit account setup (console, ~10 min)
 
@@ -61,7 +61,7 @@ Per lane, in parallel: every training split (`seed`, `seed_extra`, `seed_extra2`
 
 Tasks → each lane appears as a task named from its instruction ("PHP security reviewer", "AI agent security reviewer", …). Stages: **Collecting → Reviewing examples → Training → Testing**, then Adapters shows a version.
 
-- Grading took 30–60 min per batch; first training ran ~30 min after grading; a job took ~5 min. With 12 lanes, expect a few hours.
+- Grading took 30–60 min per batch; first training ran ~30 min after grading; a job took ~5 min. With 13 lanes, expect a few hours.
 - An adapter that is **ready / candidate** has passed its quality check. It still needs **≥ 12 judged test cases** (the setting above), then **live traffic** for the silent test (≥ 50 paired comparisons over ≥ 10 sessions; 20% of calls shadowed, ≤ 100/day), then a 10% partial rollout (≥ 100 calls, 90% bar).
 - Live traffic = ordinary recorded calls on that lane: the guard hook in use, or re-running a lane's seed split.
 

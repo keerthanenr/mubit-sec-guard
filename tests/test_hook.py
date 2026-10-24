@@ -79,8 +79,8 @@ class HookTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0)
         self.assertEqual(self.findings()[-1]["decision"], "allow")
 
-    def test_c_non_php_allows(self):
-        result = self.run_hook(payload("Write", "/proj/notes.py", content=SQLI))
+    def test_c_non_source_file_allows(self):
+        result = self.run_hook(payload("Write", "/proj/notes.txt", content=SQLI))
         self.assertEqual(result.returncode, 0)
         self.assertEqual(self.findings(), [])
 
@@ -120,8 +120,14 @@ class HookTest(unittest.TestCase):
         self.assertIn("(ai_app)", result.stderr)
         self.assertEqual(self.findings()[-1]["lane"], "ai_app")
 
-    def test_python_without_llm_import_is_ignored(self):
+    def test_plain_source_goes_to_generic_lane(self):
         result = self.run_hook(payload("Write", "/proj/util.py", content=PY_PLAIN))
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("code_injection", result.stderr)
+        self.assertIn("(generic)", result.stderr)
+
+    def test_non_source_file_is_ignored(self):
+        result = self.run_hook(payload("Write", "/proj/notes.md", content=PY_PLAIN))
         self.assertEqual(result.returncode, 0)
         self.assertEqual(self.findings(), [])
 
@@ -161,7 +167,14 @@ class HookTest(unittest.TestCase):
             "d.py": ("from langgraph.graph import StateGraph\n", ["agent_app"]),
             "e.py": ("import pandas as pd\n", ["data_science"]),
             "f.ipynb": ("x = 1", ["data_science"]),
-            "g.py": ("import os\n", []),
+            "g.py": ("import os\n", ["generic"]),
+            "cli.go": ("package main\n", ["generic"]),
+            "Main.java": ("class Main {}\n", ["generic"]),
+            "run.sh": ("echo hi\n", ["generic"]),
+            "util.js": ("const fs = require('fs')\n", ["generic"]),
+            "api.js": ("const express = require('express')\n", ["web_app", "api_security"]),
+            "routes.ts": ("import { Router } from 'express'\n", ["web_app", "api_security"]),
+            "README.md": ("eval(x)\n", []),
             "server.py": ("from mcp.server.fastmcp import FastMCP\n", ["agent_app", "mcp_server"]),
             ".mcp.json": ('{"mcpServers": {}}', ["mcp_server"]),
             "main.tf": ('resource "aws_s3_bucket" "b" {}', ["data_pipeline"]),

@@ -1,6 +1,6 @@
 # VulHawk — security guard for coding agents
 
-VulHawk checks every file your coding agent writes and blocks insecure code before it lands, with a fix hint and a skill file that shows the secure pattern. It covers PHP, AI/LLM apps, agents, RAG, ML code, notebooks, MCP servers, data pipelines, web apps, APIs, CI/CD and Kubernetes (12 lanes based on OWASP lists).
+VulHawk checks every file your coding agent writes and blocks insecure code before it lands, with a fix hint and a skill file that shows the secure pattern. It covers PHP, AI/LLM apps, agents, RAG, ML code, notebooks, MCP servers, data pipelines, web apps, APIs, CI/CD, Kubernetes, and a generic any-language lane for everything else (13 lanes based on OWASP and CWE lists).
 
 Behind it, Claude Opus checks the code through Mubit, which trains small, cheap models per lane from those checks — so checking every write stays affordable.
 

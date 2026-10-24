@@ -39,6 +39,8 @@ class Lane:
     # Extra routing for config files: any of these in the path, or all of these in the text.
     path_markers: tuple = ()
     content_markers: tuple = ()
+    # A fallback lane only takes a file that no other lane picked up.
+    fallback: bool = False
 
 
 SECRET_HINT = "Load secrets from environment variables, not source code."
@@ -395,6 +397,46 @@ LANES = {
         },
         suffixes=(".yml", ".yaml"),
         content_markers=("apiVersion:", "kind:"),
+    ),
+    "generic": Lane(
+        name="generic",
+        instruction=(
+            "You are a code security reviewer. Classify the code snippet, in any programming language, as one of: "
+            "sql_injection (untrusted input is concatenated or interpolated into a SQL query), "
+            "command_injection (untrusted input reaches a shell or OS command, or a command runs with "
+            "shell=True or via a shell string), "
+            "code_injection (untrusted input reaches eval, exec, Function, a template compiler or a dynamic "
+            "import), "
+            "path_traversal (a file path is built from untrusted input without normalising it and checking it "
+            "stays inside an allowed directory), "
+            "xss (untrusted input is written into HTML or the DOM without escaping), "
+            "unsafe_deserialization (untrusted data is deserialized with pickle, Java ObjectInputStream, "
+            "BinaryFormatter, Marshal, unsafe YAML loaders or similar), "
+            "ssrf (the server fetches a URL or host taken from untrusted input without an allow-list), "
+            "weak_crypto (MD5, SHA-1 or unsalted hashes for passwords, ECB mode, hardcoded keys or IVs, "
+            "non-cryptographic randomness for tokens, or disabled TLS verification), "
+            "hardcoded_secret (a password, API key, token or private key is written in the code), "
+            "none (none of these). "
+            "Reply with the label only, on one line, with no explanation."
+        ),
+        labels=("sql_injection", "command_injection", "code_injection", "path_traversal", "xss",
+                "unsafe_deserialization", "ssrf", "weak_crypto", "hardcoded_secret", "none"),
+        fix_hints={
+            "sql_injection": "Use prepared statements with bound parameters.",
+            "command_injection": "Pass an argument list with no shell, and allow-list any user-chosen values.",
+            "code_injection": "Never eval or exec input; parse it (JSON, ast.literal_eval) or map it to an allow-list.",
+            "path_traversal": "Resolve the path and check it stays inside the allowed directory.",
+            "xss": "Escape untrusted values for HTML (or use textContent / an auto-escaping template).",
+            "unsafe_deserialization": "Deserialize untrusted data only with JSON or a safe loader, never pickle-style formats.",
+            "ssrf": "Fetch only allow-listed hosts and block private and metadata addresses.",
+            "weak_crypto": "Use bcrypt/argon2 for passwords, AES-GCM with random IVs, a CSPRNG and TLS verification.",
+            "hardcoded_secret": SECRET_HINT,
+            "none": "",
+        },
+        suffixes=(".py", ".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".go", ".java", ".kt", ".rb",
+                  ".cs", ".rs", ".c", ".h", ".cc", ".cpp", ".hpp", ".swift", ".scala", ".sh", ".bash",
+                  ".pl", ".lua"),
+        fallback=True,
     ),
 }
 

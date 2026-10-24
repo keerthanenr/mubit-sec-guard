@@ -26,8 +26,13 @@ Open `http://localhost:4173/` for the website or `http://localhost:4173/pitch.ht
 | `data_science` | no OWASP list exists; common notebook risks | is `.ipynb` (always), or `.py` that imports `pandas` / `polars` / `duckdb` | hardcoded_secret, pii_exposure, untrusted_data_source, unsafe_deserialization, injection, none |
 | `mcp_server` | OWASP MCP Top 10 (draft) + Agentic Skills Top 10 | is `.mcp.json` / `mcp.json` (always), or `.py` that imports `mcp` / `fastmcp` | tool_poisoning, rug_pull, insecure_tool_input, insufficient_tool_authorization, excessive_tool_scope, unverified_server, none |
 | `data_pipeline` | OWASP Data Security Top 10 (draft) | is `.tf` or `.sql` (always), or `.py` that imports `boto3` / `google.cloud` / `azure.storage` / `airflow` / `dagster` / `prefect` / `snowflake` / `pyspark` / `sqlalchemy` / `psycopg2` | insecure_data_storage, pipeline_injection, excessive_data_access, data_in_transit_exposure, uncontrolled_data_sharing, none |
+| `web_app` | OWASP Top 10 (2021) | is `.py` / `.js` / `.ts` / `.java` and imports `flask` / `django` / `fastapi` / `starlette` / `express` / `koa` / Spring | broken_access_control, injection, security_misconfiguration, cryptographic_failure, authentication_failure, integrity_failure, none |
+| `api_security` | OWASP API Top 10 (2023) | same routing as `web_app` | bola, broken_authentication, mass_assignment, unrestricted_resource_consumption, bfla, ssrf, none |
+| `cicd` | OWASP CI/CD Top 10 | is `.gitlab-ci.yml` / `Jenkinsfile` (always), or a `.yml` under `.github/workflows` or with `steps:` | poisoned_pipeline_execution, excessive_permissions, dependency_chain_abuse, credential_exposure, insecure_runner, artifact_integrity, none |
+| `k8s_iac` | OWASP Kubernetes Top 10 | is `.yml` / `.yaml` with `apiVersion:` and `kind:` | insecure_workload, overly_permissive_rbac, secrets_exposure, unpinned_image, missing_resource_limits, network_exposure, none |
+| `generic` | CWE Top 25 basics, any language | is a source file (`.py` `.js` `.ts` `.go` `.java` `.kt` `.rb` `.cs` `.rs` `.c` `.cpp` `.swift` `.scala` `.sh` …) that **no other lane picked up** | sql_injection, command_injection, code_injection, path_traversal, xss, unsafe_deserialization, ssrf, weak_crypto, hardcoded_secret, none |
 
-A file can match several lanes; the hook checks it in each and blocks on any finding. Items that a code snippet can't show (misinformation, membership inference, cascading failures, rogue agents…) are deliberately not labels.
+A file can match several lanes; the hook checks it in each and blocks on any finding. `generic` is a fallback: it only runs when no specialised lane matched, so a plain script still gets checked without paying for an extra call on files a specialised lane already covers. JS files count as importing a module through `require('x')` or `import … from 'x'` as well. Items that a code snippet can't show (misinformation, membership inference, cascading failures, rogue agents…) are deliberately not labels.
 
 Every lane except `web_php` puts one-line label definitions in its instruction. Without them, Haiku over-used labels and added explanations after them.
 
@@ -104,7 +109,7 @@ The holdout calls go through Mubit with the same lane instruction, so they also 
 
 `.claude/settings.json` runs `guard_hook.py` before every `Write`, `Edit` or `MultiEdit`. It only scans files under `demo-app/`, so it never scans this project's own scripts. Change that with `GUARD_SCOPE_DIR`, a path relative to the project or an absolute one:
 
-1. **Pick a lane** from the file. A `.py` file only counts as `ai_app` if the new code or the existing file imports an LLM library. Any other file is ignored.
+1. **Pick a lane** from the file. A `.py` file only counts as `ai_app` if the new code or the existing file imports an LLM library. A source file no lane claims goes to `generic`; non-source files (Markdown, plain JSON, text…) are ignored.
 2. **Local secrets check.** `local_checks.py` looks for `sk_live_`, `sk-…`, `AKIA…`, and `api_key`/`secret` set to a long literal. A match returns `hardcoded_secret` with no network call, and the value is redacted.
 3. **Classify.** Otherwise the lane's classifier asks Mubit for a label.
 4. **Block.** Any label other than `none` or `unparseable` blocks the write (exit 2) with `guard: <label> in <file> (<lane>). <fix hint>`.

@@ -1,6 +1,6 @@
 ---
 name: rebuild-mubit-adapters
-description: Rebuild all 12 security-lane Mubit tasks and adapters in a new or empty Mubit account from this repo's datasets. Use when setting up a fresh Mubit project, moving to another Mubit account, or retraining every lane from scratch.
+description: Rebuild all 13 security-lane Mubit tasks and adapters in a new or empty Mubit account from this repo's datasets. Use when setting up a fresh Mubit project, moving to another Mubit account, or retraining every lane from scratch.
 ---
 
 # Rebuild the Mubit adapters

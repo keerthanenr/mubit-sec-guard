@@ -46,7 +46,11 @@ def extract_code(tool, tool_input, file_path=""):
 
 
 def _imports(code, modules):
-    pattern = r"^\s*(?:import|from)\s+(?:" + "|".join(re.escape(m) for m in modules) + r")\w*\b"
+    names = "|".join(re.escape(m) for m in modules)
+    # Python / Java imports, then JS: require('x'), import ... from 'x', import 'x'.
+    pattern = (r"^\s*(?:import|from)\s+(?:" + names + r")\w*\b"
+               r"|\brequire\(\s*['\"](?:" + names + r")['\"/]"
+               r"|^\s*import\b[^;\n]*['\"](?:" + names + r")['\"/]")
     return re.search(pattern, code, re.M) is not None
 
 
@@ -70,10 +74,15 @@ def route(file_path, code, read_existing=True):
             existing = ""
     lanes = []
     for lane in config.LANES.values():
+        if lane.fallback:
+            continue
         if lower.endswith(lane.always_suffixes or ("\0",)):
             lanes.append(lane.name)
         elif lower.endswith(lane.suffixes or ("\0",)) and _lane_matches(lane, lower, code, existing):
             lanes.append(lane.name)
+    if not lanes:
+        lanes = [lane.name for lane in config.LANES.values()
+                 if lane.fallback and lower.endswith(lane.suffixes or ("\0",))]
     return lanes
 
 

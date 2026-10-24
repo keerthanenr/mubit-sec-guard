@@ -63,6 +63,26 @@ _OFFLINE_RULES = {
         ("excessive_data_access", re.compile(r"(?i)grant\s+all|roles/owner|ACCOUNTADMIN|[\"']s3:\*[\"']")),
         ("pipeline_injection", re.compile(r"(?i)f[\"'](?:create|insert|copy|alter)\b")),
     ],
+    "generic": [
+        ("unsafe_deserialization", re.compile(
+            r"pickle\.loads?\(|ObjectInputStream|BinaryFormatter|Marshal\.load|yaml\.load\((?![^)]*SafeLoader)"
+            r"|YAML\.load\(|unserialize\(")),
+        ("command_injection", re.compile(
+            r"shell\s*=\s*True|os\.system\(|os\.popen\(|child_process|\bexecSync\(|Runtime\.getRuntime\(\)\.exec"
+            r"|\bsystem\(|`[^`]*#\{|exec\.Command\(\s*\"(?:sh|bash)\"")),
+        ("code_injection", re.compile(r"\beval\s*\(|\bexec\s*\(|new Function\(|\binstance_eval\b")),
+        ("sql_injection", re.compile(
+            r"(?i)[\"'`](?:select|insert|update|delete)\b[^\"'`]*(?:[\"'`]\s*\+|\$\{|\{\w+\}|%s[\"'`]\s*%|#\{)"
+            r"|f[\"'](?:select|insert|update|delete)\b|Sprintf\(\s*\"(?i:select|insert|update|delete)\b")),
+        ("weak_crypto", re.compile(
+            r"(?i)\bmd5\b|\bsha1\b|AES/ECB|MODE_ECB|InsecureSkipVerify:\s*true|verify\s*=\s*False"
+            r"|rejectUnauthorized:\s*false|Math\.random\(\)")),
+        ("xss", re.compile(r"\.innerHTML\s*=|document\.write\(|dangerouslySetInnerHTML")),
+        ("ssrf", re.compile(r"(?:requests\.get|urlopen|fetch|http\.Get)\(\s*(?:url|target|req|request|params|args)")),
+        ("hardcoded_secret", re.compile(
+            r"(?i)(?:password|passwd|secret|token|api_?key)\w*['\"]?\s*(?::=|=>|=|:)\s*['\"][^'\"]{8,}['\"]"
+            r"|-----BEGIN [A-Z ]*PRIVATE KEY-----|://\w+:[^@/\s]+@")),
+    ],
 }
 
 
