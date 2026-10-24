@@ -2,7 +2,8 @@
 from collections import Counter
 
 import config
-from seed import parse_args, print_spend, run_batch
+import spend
+from seed import parse_args, run_batch
 
 
 def summarize(lane, results):
@@ -32,7 +33,8 @@ def summarize(lane, results):
 
 if __name__ == "__main__":
     args = parse_args(__doc__)
+    before = spend.snapshot()
     for lane in args.lanes:
         # Holdout snippets must not be recorded or trained on.
         summarize(lane, run_batch(lane, "holdout", store=False))
-    print_spend()
+    spend.run_summary(before)

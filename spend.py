@@ -72,3 +72,41 @@ def record(lane, input_tokens, output_tokens):
         tmp.write_text(json.dumps(data, indent=2))
         os.replace(tmp, _path())
     return usd
+
+
+def snapshot() -> dict:
+    """Capture ledger state before a run so run_summary() can compute the delta."""
+    data = load()
+    return {
+        "total_usd": data["total_usd"],
+        "lanes": {lane: dict(stats) for lane, stats in data["lanes"].items()},
+    }
+
+
+def run_summary(before: dict) -> None:
+    """Print tokens and cost for this run (delta vs before) and the all-time total."""
+    after = load()
+    run_calls = run_in = run_out = 0.0
+    run_usd = after["total_usd"] - before["total_usd"]
+
+    rows = []
+    for lane, cur in after["lanes"].items():
+        prev = before["lanes"].get(lane, {"calls": 0, "input_tokens": 0, "output_tokens": 0, "usd": 0.0})
+        d_calls = cur["calls"] - prev["calls"]
+        d_in = cur["input_tokens"] - prev["input_tokens"]
+        d_out = cur["output_tokens"] - prev["output_tokens"]
+        d_usd = cur["usd"] - prev["usd"]
+        if d_calls:
+            rows.append((lane, d_calls, d_in, d_out, d_usd))
+            run_calls += d_calls
+            run_in += d_in
+            run_out += d_out
+
+    print("\n=== Run summary ===")
+    for lane, calls, in_tok, out_tok, usd in rows:
+        print(f"  {lane:<14}{calls:>4} calls  {in_tok:>7,} in / {out_tok:>6,} out tokens  ${usd:.4f}")
+    sep = "─" * 61
+    print(f"  {sep}")
+    print(f"  {'this run':<14}{int(run_calls):>4} calls  {int(run_in):>7,} in / {int(run_out):>6,} out tokens  ${run_usd:.4f}")
+    print(f"  {'all-time':<14}{'':>4}       {'':>7}    {'':>6}              ${after['total_usd']:.4f}"
+          f" of ${config.budget_usd():.2f} cap")

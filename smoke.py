@@ -19,9 +19,10 @@ if __name__ == "__main__":
         sys.exit("GUARD_OFFLINE=1 is set; unset it for the smoke test.")
     if not config.api_key():
         sys.exit("MUBIT_API_KEY is not set (put it in .env)")
+    before = spend.snapshot()
     label, request_id = classifier.classify(SNIPPETS[lane], f"smoke-{lane}-{date.today().isoformat()}", lane)
     print(f"lane:       {lane}")
     print(f"model:      {config.model()}")
     print(f"label:      {label}")
     print(f"request_id: {request_id}")
-    print(f"est. spend: ${spend.load()['total_usd']:.6f} total")
+    spend.run_summary(before)
