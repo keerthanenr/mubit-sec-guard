@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VulHawk Guard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+/* ── tokens ─────────────────────────────────────────────────────────────
+   layout: stat tiles → accuracy comparison → spend/calls → label recall  */
+:root {
+  --bg:     #F2F4F8;
+  --surf:   #FFFFFF;
+  --surf2:  #EAEDF3;
+  --bdr:    #D5D9E4;
+  --fg:     #1A1D27;
+  --fg2:    #5A6278;
+  --fg3:    #8E98AC;
+  --seed:   #1E6EC8;
+  --hold:   #16803A;
+  --spend:  #9A6600;
+  --lo:     #B92B2B;
+  --mid:    #8A5B00;
+  --hi:     #16803A;
+  --r:      8px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:     #0D1117;
+    --surf:   #161B22;
+    --surf2:  #1E252E;
+    --bdr:    #2D3540;
+    --fg:     #E2E8F2;
+    --fg2:    #8894A6;
+    --fg3:    #5C6678;
+    --seed:   #5CA0F2;
+    --hold:   #3DB558;
+    --spend:  #D4993B;
+    --lo:     #E85050;
+    --mid:    #D4993B;
+    --hi:     #3DB558;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:     #0D1117;
+  --surf:   #161B22;
+  --surf2:  #1E252E;
+  --bdr:    #2D3540;
+  --fg:     #E2E8F2;
+  --fg2:    #8894A6;
+  --fg3:    #5C6678;
+  --seed:   #5CA0F2;
+  --hold:   #3DB558;
+  --spend:  #D4993B;
+  --lo:     #E85050;
+  --mid:    #D4993B;
+  --hi:     #3DB558;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Inter', system-ui, sans-serif;
+  line-height: 1.5;
+  padding-left:  max(16px, env(safe-area-inset-left,  0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0;
+  min-height: 100vh;
+}
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+
+.wrap { max-width: 1160px; margin: 0 auto; padding-block: 2rem; }
+
+/* header */
+.hdr {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 1rem; flex-wrap: wrap;
+  border-bottom: 1px solid var(--bdr);
+  padding-bottom: 1.25rem; margin-bottom: 1.5rem;
+}
+.hdr-left h1 {
+  font-size: 1.45rem; font-weight: 600; letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+.hdr-sub { font-size: 0.8rem; color: var(--fg2); margin-top: 0.3rem; }
+.badges { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.5rem; }
+.badge {
+  font-size: 0.68rem; font-weight: 500; letter-spacing: 0.04em;
+  padding: 0.15em 0.55em; border-radius: 3px;
+  border: 1px solid var(--bdr); color: var(--fg2); background: var(--surf);
+}
+.badge.g { color: var(--hold); border-color: currentColor; }
+.theme-btn {
+  background: var(--surf); border: 1px solid var(--bdr); border-radius: 6px;
+  padding: 0.35rem 0.75rem; font-size: 0.78rem; color: var(--fg2);
+  cursor: pointer; white-space: nowrap; flex-shrink: 0;
+}
+.theme-btn:hover { color: var(--fg); }
+
+/* stat tiles */
+.tiles { display: grid; grid-template-columns: repeat(4,1fr); gap: 0.9rem; }
+@media (max-width: 640px) { .tiles { grid-template-columns: repeat(2,1fr); } }
+.tile {
+  background: var(--surf); border: 1px solid var(--bdr);
+  border-radius: var(--r); padding: 1rem 1.1rem;
+}
+.tile-v {
+  font-size: 1.95rem; font-weight: 600; line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  font-family: 'JetBrains Mono', monospace;
+}
+.tile-v.blue  { color: var(--seed); }
+.tile-v.green { color: var(--hold); }
+.tile-v.amber { color: var(--spend); }
+.tile-l { font-size: 0.76rem; color: var(--fg2); margin-top: 0.2rem; }
+
+/* section */
+.sec { margin-block: 1.5rem; }
+.sec-title {
+  font-size: 0.9rem; font-weight: 600; color: var(--fg);
+  margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;
+}
+
+/* card */
+.card {
+  background: var(--surf); border: 1px solid var(--bdr);
+  border-radius: var(--r); padding: 1.1rem 1.2rem;
+}
+.card-title { font-size: 0.88rem; font-weight: 600; margin-bottom: 0.75rem; }
+
+/* insight */
+.insight {
+  background: var(--surf); border: 1px solid var(--bdr);
+  border-left: 3px solid var(--seed);
+  border-radius: 0 var(--r) var(--r) 0;
+  padding: 0.75rem 1rem; font-size: 0.82rem;
+  color: var(--fg2); line-height: 1.55;
+  margin-block: 1.25rem;
+}
+.insight strong { color: var(--fg); }
+
+/* legend */
+.legend { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+.li { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--fg2); }
+.ld { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+/* two-col */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
+@media (max-width: 640px) { .two-col { grid-template-columns: 1fr; } }
+
+/* recall grid */
+.recall-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.9rem;
+}
+.rc { background: var(--surf); border: 1px solid var(--bdr); border-radius: var(--r); padding: 0.85rem 0.9rem; }
+.rc-title { font-size: 0.78rem; font-weight: 600; color: var(--fg); margin-bottom: 0.55rem; }
+.rr { display: flex; align-items: center; gap: 0.45rem; margin-bottom: 0.3rem; }
+.rr-lbl {
+  font-size: 0.68rem; color: var(--fg2); flex: 1 1 0; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-family: 'JetBrains Mono', monospace;
+}
+.rr-track { flex: 0 0 72px; height: 7px; background: var(--surf2); border-radius: 4px; overflow: hidden; }
+.rr-fill { height: 100%; border-radius: 4px; }
+.rr-pct {
+  font-size: 0.68rem; color: var(--fg2); width: 28px; text-align: right;
+  font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums;
+}
+
+/* SVG chart shared */
+.chart-svg { overflow: visible; width: 100%; display: block; }
+
+/* tooltip */
+.tip {
+  position: fixed; background: var(--surf); border: 1px solid var(--bdr);
+  border-radius: 6px; padding: 0.5rem 0.75rem; font-size: 11.5px;
+  pointer-events: none; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  max-width: 220px; z-index: 999; opacity: 0; transition: opacity 0.1s;
+}
+.tip.on { opacity: 1; }
+.tip-ttl { font-weight: 600; color: var(--fg); margin-bottom: 0.25rem; font-size: 12px; }
+.tip-row { display: flex; justify-content: space-between; gap: 0.75rem; }
+.tip-k { color: var(--fg2); }
+.tip-v { color: var(--fg); font-family: 'JetBrains Mono', monospace; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- Header -->
+  <header class="hdr">
+    <div class="hdr-left">
+      <div style="font-size:0.7rem;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--fg3);margin-bottom:.2rem">Mubit Security Guard</div>
+      <h1>VulHawk Run Results</h1>
+      <div class="hdr-sub">Seed training + holdout evaluation across <span id="subLanes"></span> OWASP-aligned security lanes</div>
+      <div class="badges">
+        <span class="badge" id="badgeLanes"></span>
+        <span class="badge" id="badgeBase"></span>
+        <span class="badge g" id="badgeHoldout"></span>
+        <span class="badge" id="badgeGenerated"></span>
+      </div>
+    </div>
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">☽ Dark</button>
+  </header>
+
+  <!-- Stat tiles -->
+  <div class="tiles">
+    <div class="tile">
+      <div class="tile-v blue" id="tileLanes"></div>
+      <div class="tile-l">Security Lanes</div>
+    </div>
+    <div class="tile">
+      <div class="tile-v" id="tileSamples"></div>
+      <div class="tile-l">Labelled Samples (seed + holdout)</div>
+    </div>
+    <div class="tile">
+      <div class="tile-v amber" id="tileSpend"></div>
+      <div class="tile-l">Total Classifier Spend</div>
+    </div>
+    <div class="tile">
+      <div class="tile-v green" id="tileHoldout"></div>
+      <div class="tile-l">Avg Holdout Accuracy</div>
+    </div>
+  </div>
+
+  <!-- Insight -->
+  <div class="insight" id="insight"></div>
+
+  <!-- Accuracy chart -->
+  <div class="sec card" id="accCard">
+    <div class="card-title">Classifier Accuracy per Lane — Seed vs Holdout</div>
+    <div class="legend">
+      <div class="li"><div class="ld" style="background:var(--seed)"></div><span>Seed (<span class="legend-base"></span>, base model)</span></div>
+      <div class="li"><div class="ld" style="background:var(--hold)"></div><span>Holdout (<span class="legend-hold"></span>, adapted)</span></div>
+    </div>
+    <div id="accChart"></div>
+  </div>
+
+  <!-- Spend + Calls -->
+  <div class="sec two-col">
+    <div class="card">
+      <div class="card-title">API Spend per Lane (USD)</div>
+      <div id="spendChart"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">API Calls per Lane</div>
+      <div id="callsChart"></div>
+    </div>
+  </div>
+
+  <!-- Per-label recall -->
+  <div class="sec">
+    <div class="sec-title">Per-Label Recall (Seed) — Sorted Worst First</div>
+    <div class="recall-grid" id="recallGrid"></div>
+  </div>
+
+</div>
+
+<div class="tip" id="tip"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+// ── Data ────────────────────────────────────────────────────────────────
+// Written by dashboard.py from results/*.jsonl and spend.json. Never edit by hand.
+const DATA = {"lanes":[{"id":"web_php","lbl":"Web PHP","sAcc":0.8854166666666666,"sC":170,"sN":192,"hAcc":1.0,"hC":24,"hN":24,"usd":0.7507200000000008,"calls":1173},{"id":"ai_app","lbl":"AI App","sAcc":0.6923076923076923,"sC":108,"sN":156,"hAcc":1.0,"hC":24,"hN":24,"usd":0.614029999999999,"calls":598},{"id":"agent_app","lbl":"Agent App","sAcc":0.65625,"sC":147,"sN":224,"hAcc":1.0,"hC":28,"hN":28,"usd":1.0252219999999976,"calls":857},{"id":"rag_app","lbl":"RAG App","sAcc":0.8384615384615385,"sC":109,"sN":130,"hAcc":0.95,"hC":19,"hN":20,"usd":0.5762680000000001,"calls":519},{"id":"ml_code","lbl":"ML Code","sAcc":0.7291666666666666,"sC":140,"sN":192,"hAcc":0.9583333333333334,"hC":23,"hN":24,"usd":1.6251949999999982,"calls":1136},{"id":"data_science","lbl":"Data Science","sAcc":0.9294871794871795,"sC":145,"sN":156,"hAcc":1.0,"hC":24,"hN":24,"usd":0.6295950000000005,"calls":637},{"id":"mcp_server","lbl":"MCP Server","sAcc":0.6470588235294118,"sC":77,"sN":119,"hAcc":1.0,"hC":28,"hN":28,"usd":0.6510059999999993,"calls":462},{"id":"data_pipeline","lbl":"Data Pipeline","sAcc":0.9,"sC":54,"sN":60,"hAcc":1.0,"hC":24,"hN":24,"usd":0.3224670000000001,"calls":258},{"id":"web_app","lbl":"Web App","sAcc":0.8428571428571429,"sC":59,"sN":70,"hAcc":0.9285714285714286,"hC":26,"hN":28,"usd":0.35205099999999967,"calls":297},{"id":"api_security","lbl":"API Security","sAcc":0.7714285714285715,"sC":54,"sN":70,"hAcc":1.0,"hC":28,"hN":28,"usd":0.3516350000000001,"calls":292},{"id":"cicd","lbl":"CI/CD","sAcc":0.6428571428571429,"sC":45,"sN":70,"hAcc":1.0,"hC":28,"hN":28,"usd":0.44081799999999993,"calls":282},{"id":"k8s_iac","lbl":"K8s / IaC","sAcc":0.8714285714285714,"sC":61,"sN":70,"hAcc":1.0,"hC":28,"hN":28,"usd":0.44184499999999954,"calls":299}],"recall":{"web_php":{"sql_injection":1.0,"xss":0.875,"hardcoded_secret":1.0,"path_traversal":0.90625,"unsafe_deserialization":1.0,"none":0.53125},"ai_app":{"prompt_injection":0.6923076923076923,"unsafe_output_handling":0.8846153846153846,"excessive_agency":0.8076923076923077,"unbounded_consumption":0.3076923076923077,"hardcoded_secret":0.9615384615384616,"none":0.5},"agent_app":{"goal_hijack":0.84375,"tool_misuse":0.84375,"privilege_abuse":0.71875,"unexpected_code_execution":0.90625,"memory_poisoning":0.59375,"insecure_agent_comms":0.5,"none":0.1875},"rag_app":{"sensitive_info_disclosure":1.0,"hidden_context_exposure":0.9230769230769231,"vector_store_weakness":1.0,"untrusted_ingestion":0.7692307692307693,"none":0.5},"ml_code":{"unsafe_model_loading":0.9375,"unverified_model_source":0.9375,"training_data_poisoning":0.6875,"model_exposure":0.46875,"unvalidated_model_input":0.84375,"none":0.5},"data_science":{"hardcoded_secret":1.0,"pii_exposure":0.9615384615384616,"untrusted_data_source":1.0,"unsafe_deserialization":1.0,"injection":1.0,"none":0.6153846153846154},"mcp_server":{"tool_poisoning":0.8235294117647058,"rug_pull":0.7647058823529411,"insecure_tool_input":0.7647058823529411,"insufficient_tool_authorization":0.7647058823529411,"excessive_tool_scope":0.35294117647058826,"unverified_server":0.6470588235294118,"none":0.4117647058823529},"data_pipeline":{"insecure_data_storage":0.9,"pipeline_injection":0.8,"excessive_data_access":0.9,"data_in_transit_exposure":1.0,"uncontrolled_data_sharing":1.0,"none":0.8},"web_app":{"broken_access_control":1.0,"injection":1.0,"security_misconfiguration":0.9,"cryptographic_failure":0.7,"authentication_failure":0.9,"integrity_failure":0.9,"none":0.5},"api_security":{"bola":0.9,"broken_authentication":0.6,"mass_assignment":0.7,"unrestricted_resource_consumption":0.2,"bfla":1.0,"ssrf":1.0,"none":1.0},"cicd":{"poisoned_pipeline_execution":0.6,"excessive_permissions":0.8,"dependency_chain_abuse":0.6,"credential_exposure":1.0,"insecure_runner":0.8,"artifact_integrity":0.1,"none":0.6},"k8s_iac":{"insecure_workload":1.0,"overly_permissive_rbac":1.0,"secrets_exposure":1.0,"unpinned_image":0.8,"missing_resource_limits":0.5,"network_exposure":0.9,"none":0.9}},"summary":{"lanes":12,"samples":1817,"usd":7.780851999999995,"calls":6810,"holdout_accuracy":0.9864087301587302,"base_model":"gpt-6-luna","holdout_model":"claude-opus-5-5","generated":"2026-10-24"}};
+const LANES = DATA.lanes, RECALL = DATA.recall, SUMMARY = DATA.summary;
+
+// ── Summary text ─────────────────────────────────────────────────────────
+const pct = v => `${(v*100).toFixed(0)}%`;
+
+function fillSummary() {
+  const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+  set('subLanes',       SUMMARY.lanes);
+  set('badgeLanes',     `${SUMMARY.lanes} lanes`);
+  set('badgeBase',      `${SUMMARY.base_model} base`);
+  set('badgeHoldout',   `${SUMMARY.holdout_model} holdout`);
+  set('badgeGenerated', SUMMARY.generated);
+  set('tileLanes',      SUMMARY.lanes);
+  set('tileSamples',    SUMMARY.samples.toLocaleString());
+  set('tileSpend',      `$${SUMMARY.usd.toFixed(2)}`);
+  set('tileHoldout',    pct(SUMMARY.holdout_accuracy));
+  document.querySelectorAll('.legend-base').forEach(e => e.textContent = SUMMARY.base_model);
+  document.querySelectorAll('.legend-hold').forEach(e => e.textContent = SUMMARY.holdout_model);
+
+  const hardest = [...LANES].sort((a,b) => a.sAcc - b.sAcc).slice(0,3).map(l => l.lbl);
+  const sAcc = LANES.map(l => l.sAcc), hAcc = LANES.map(l => l.hAcc);
+  const worstLabel = Object.entries(RECALL)
+    .flatMap(([id, lbls]) => Object.entries(lbls).map(([lbl, r]) => ({ id, lbl, r })))
+    .sort((a,b) => a.r - b.r)[0];
+  const byLane = Object.fromEntries(LANES.map(l => [l.id, l.lbl]));
+
+  document.getElementById('insight').innerHTML =
+    `<strong>Finding:</strong> After adapter training, ${SUMMARY.holdout_model} scores ` +
+    `${pct(Math.min(...hAcc))}–${pct(Math.max(...hAcc))} on the holdout set across all ` +
+    `${SUMMARY.lanes} lanes. The seed baseline (${SUMMARY.base_model}) ranges ` +
+    `${pct(Math.min(...sAcc))}–${pct(Math.max(...sAcc))} — the hardest lanes are ` +
+    `<strong>${hardest.join(', ')}</strong>. The weakest single label is ` +
+    `<strong>${worstLabel.lbl}</strong> in ${byLane[worstLabel.id]} at ${pct(worstLabel.r)} recall.`;
+}
+
+// ── Tooltip ──────────────────────────────────────────────────────────────
+const tip = document.getElementById('tip');
+function showTip(evt, html) {
+  tip.innerHTML = html;
+  tip.classList.add('on');
+  posTip(evt);
+}
+function posTip(e) {
+  const tw = tip.offsetWidth, th = tip.offsetHeight;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  tip.style.left = Math.min(e.clientX + 14, vw - tw - 12) + 'px';
+  tip.style.top  = Math.max(e.clientY - 10, 8) + 'px';
+}
+function hideTip() { tip.classList.remove('on'); }
+
+function tipHtml(title, rows) {
+  return `<div class="tip-ttl">${title}</div>` +
+    rows.map(([k,v]) => `<div class="tip-row"><span class="tip-k">${k}</span><span class="tip-v">${v}</span></div>`).join('');
+}
+
+// ── CSS var helper ───────────────────────────────────────────────────────
+function cv(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+
+// ── Accuracy chart ───────────────────────────────────────────────────────
+function drawAcc() {
+  const el = document.getElementById('accChart');
+  el.innerHTML = '';
+  const sorted = [...LANES].sort((a,b) => a.sAcc - b.sAcc); // worst at top
+
+  const W = el.clientWidth || 700;
+  const bH = 13, gap = 5, grpGap = 12;
+  const grpH = bH*2 + gap + grpGap;
+  const mL = 118, mR = 48, mT = 6, mB = 28;
+  const cW = W - mL - mR;
+  const cH = sorted.length * grpH;
+  const H  = cH + mT + mB;
+
+  const svg = d3.create('svg').attr('viewBox',`0 0 ${W} ${H}`).attr('class','chart-svg');
+  const xS  = d3.scaleLinear().domain([0,1]).range([0,cW]);
+  const g   = svg.append('g').attr('transform',`translate(${mL},${mT})`);
+
+  // grid + axis labels
+  [.25,.5,.75,1].forEach(v => {
+    g.append('line').style('stroke','var(--bdr)').style('stroke-width','1')
+      .style('stroke-dasharray','3 3')
+      .attr('x1',xS(v)).attr('x2',xS(v)).attr('y1',0).attr('y2',cH);
+    g.append('text')
+      .style('fill','var(--fg3)').style('font-size','10.5px')
+      .style('font-family',"'JetBrains Mono',monospace")
+      .attr('x',xS(v)).attr('y',cH+18)
+      .attr('text-anchor','middle').text(`${v*100|0}%`);
+  });
+  g.append('line').style('stroke','var(--bdr)').style('stroke-width','1')
+    .attr('x1',0).attr('x2',cW).attr('y1',cH).attr('y2',cH);
+
+  sorted.forEach((lane,i) => {
+    const gy = i*grpH;
+    const gg = g.append('g').attr('transform',`translate(0,${gy})`);
+
+    gg.append('text')
+      .style('fill','var(--fg)').style('font-size','12px')
+      .attr('x',-7).attr('y',bH*2+gap-3)
+      .attr('text-anchor','end').attr('dominant-baseline','middle')
+      .text(lane.lbl);
+
+    // seed bar
+    const sw = xS(lane.sAcc);
+    gg.append('rect')
+      .style('fill','var(--seed)').style('opacity','.82')
+      .attr('rx',3).attr('x',0).attr('y',0).attr('width',sw).attr('height',bH)
+      .on('mouseenter', e => showTip(e, tipHtml(lane.lbl + ' — Seed', [
+        ['Accuracy', `${(lane.sAcc*100).toFixed(1)}%`],
+        ['Correct',  `${lane.sC}/${lane.sN}`],
+        ['Model',    SUMMARY.base_model],
+      ])))
+      .on('mousemove', posTip).on('mouseleave', hideTip);
+    if (sw > 26)
+      gg.append('text').style('fill','var(--surf)').style('font-size','9.5px')
+        .style('font-family',"'JetBrains Mono',monospace")
+        .attr('x',sw-4).attr('y',bH/2).attr('text-anchor','end')
+        .attr('dominant-baseline','middle').text(`${(lane.sAcc*100).toFixed(0)}%`);
+
+    // holdout bar
+    const hw = xS(lane.hAcc);
+    gg.append('rect')
+      .style('fill','var(--hold)').style('opacity','.82')
+      .attr('rx',3).attr('x',0).attr('y',bH+gap).attr('width',hw).attr('height',bH)
+      .on('mouseenter', e => showTip(e, tipHtml(lane.lbl + ' — Holdout', [
+        ['Accuracy', `${(lane.hAcc*100).toFixed(1)}%`],
+        ['Correct',  `${lane.hC}/${lane.hN}`],
+        ['Model',    SUMMARY.holdout_model],
+      ])))
+      .on('mousemove', posTip).on('mouseleave', hideTip);
+    if (hw > 26)
+      gg.append('text').style('fill','var(--surf)').style('font-size','9.5px')
+        .style('font-family',"'JetBrains Mono',monospace")
+        .attr('x',hw-4).attr('y',bH+gap+bH/2).attr('text-anchor','end')
+        .attr('dominant-baseline','middle').text(`${(lane.hAcc*100).toFixed(0)}%`);
+  });
+  el.appendChild(svg.node());
+}
+
+// ── Spend chart ──────────────────────────────────────────────────────────
+function drawSpend() {
+  const el = document.getElementById('spendChart');
+  el.innerHTML = '';
+  const sorted = [...LANES].sort((a,b) => b.usd - a.usd);
+  const W = el.clientWidth || 340;
+  const bH = 15, gap = 7;
+  const mL = 108, mR = 56, mT = 4, mB = 8;
+  const cW = W - mL - mR;
+  const cH = sorted.length*(bH+gap);
+  const H  = cH + mT + mB;
+
+  const svg = d3.create('svg').attr('viewBox',`0 0 ${W} ${H}`).attr('class','chart-svg');
+  const x   = d3.scaleLinear().domain([0, d3.max(sorted,d=>d.usd)*1.08]).range([0,cW]);
+  const g   = svg.append('g').attr('transform',`translate(${mL},${mT})`);
+
+  sorted.forEach((lane,i) => {
+    const y = i*(bH+gap);
+    const bw = x(lane.usd);
+    g.append('text').style('fill','var(--fg)').style('font-size','11.5px')
+      .attr('x',-6).attr('y',y+bH/2).attr('text-anchor','end')
+      .attr('dominant-baseline','middle').text(lane.lbl);
+    g.append('rect')
+      .style('fill','var(--spend)').style('opacity','.82')
+      .attr('rx',3).attr('x',0).attr('y',y).attr('width',bw).attr('height',bH)
+      .on('mouseenter', e => showTip(e, tipHtml(lane.lbl, [
+        ['Cost',       `$${lane.usd.toFixed(4)}`],
+        ['Calls',      lane.calls.toLocaleString()],
+        ['Seed n',     lane.sN],
+        ['$/sample',   `$${(lane.usd/lane.sN).toFixed(4)}`],
+      ])))
+      .on('mousemove', posTip).on('mouseleave', hideTip);
+    g.append('text').style('fill','var(--fg2)').style('font-size','10px')
+      .style('font-family',"'JetBrains Mono',monospace")
+      .attr('x',bw+5).attr('y',y+bH/2).attr('dominant-baseline','middle')
+      .text(`$${lane.usd.toFixed(2)}`);
+  });
+  el.appendChild(svg.node());
+}
+
+// ── Calls chart ──────────────────────────────────────────────────────────
+function drawCalls() {
+  const el = document.getElementById('callsChart');
+  el.innerHTML = '';
+  const sorted = [...LANES].sort((a,b) => b.calls - a.calls);
+  const W = el.clientWidth || 340;
+  const bH = 15, gap = 7;
+  const mL = 108, mR = 52, mT = 4, mB = 8;
+  const cW = W - mL - mR;
+  const cH = sorted.length*(bH+gap);
+  const H  = cH + mT + mB;
+
+  const svg = d3.create('svg').attr('viewBox',`0 0 ${W} ${H}`).attr('class','chart-svg');
+  const x   = d3.scaleLinear().domain([0, d3.max(sorted,d=>d.calls)*1.08]).range([0,cW]);
+  const g   = svg.append('g').attr('transform',`translate(${mL},${mT})`);
+
+  sorted.forEach((lane,i) => {
+    const y = i*(bH+gap);
+    const bw = x(lane.calls);
+    g.append('text').style('fill','var(--fg)').style('font-size','11.5px')
+      .attr('x',-6).attr('y',y+bH/2).attr('text-anchor','end')
+      .attr('dominant-baseline','middle').text(lane.lbl);
+    g.append('rect')
+      .style('fill','var(--seed)').style('opacity','.7')
+      .attr('rx',3).attr('x',0).attr('y',y).attr('width',bw).attr('height',bH)
+      .on('mouseenter', e => showTip(e, tipHtml(lane.lbl, [
+        ['Calls',      lane.calls.toLocaleString()],
+        ['Samples',    lane.sN],
+        ['Calls/sample', (lane.calls/lane.sN).toFixed(1)],
+      ])))
+      .on('mousemove', posTip).on('mouseleave', hideTip);
+    g.append('text').style('fill','var(--fg2)').style('font-size','10px')
+      .style('font-family',"'JetBrains Mono',monospace")
+      .attr('x',bw+5).attr('y',y+bH/2).attr('dominant-baseline','middle')
+      .text(lane.calls.toLocaleString());
+  });
+  el.appendChild(svg.node());
+}
+
+// ── Per-label recall cards ───────────────────────────────────────────────
+function recallFill(r) {
+  if (r >= 0.9) return 'var(--hi)';
+  if (r >= 0.7) return 'var(--mid)';
+  return 'var(--lo)';
+}
+
+function drawRecall() {
+  const grid = document.getElementById('recallGrid');
+  grid.innerHTML = '';
+  const sorted = [...LANES].sort((a,b) => a.sAcc - b.sAcc);
+
+  sorted.forEach(lane => {
+    const lbls = RECALL[lane.id];
+    if (!lbls) return;
+    const sortedLbls = Object.entries(lbls).sort(([,a],[,b]) => a-b);
+
+    const card = document.createElement('div');
+    card.className = 'rc';
+
+    const ttl = document.createElement('div');
+    ttl.className = 'rc-title';
+    ttl.textContent = lane.lbl;
+    card.appendChild(ttl);
+
+    sortedLbls.forEach(([lbl, r]) => {
+      const row = document.createElement('div');
+      row.className = 'rr';
+      row.innerHTML = `
+        <div class="rr-lbl" title="${lbl}">${lbl}</div>
+        <div class="rr-track"><div class="rr-fill" style="width:${r*100}%;background:${recallFill(r)}"></div></div>
+        <div class="rr-pct">${(r*100).toFixed(0)}%</div>
+      `;
+      card.appendChild(row);
+    });
+    grid.appendChild(card);
+  });
+}
+
+// ── Theme ────────────────────────────────────────────────────────────────
+function toggleTheme() {
+  const root = document.documentElement;
+  const isDark = root.getAttribute('data-theme') === 'dark' ||
+    (!root.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const next = isDark ? 'light' : 'dark';
+  root.setAttribute('data-theme', next);
+  document.getElementById('themeBtn').textContent = next === 'dark' ? '☀ Light' : '☽ Dark';
+  requestAnimationFrame(drawCharts);
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────
+function drawCharts() { drawAcc(); drawSpend(); drawCalls(); }
+
+function init() {
+  const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  document.getElementById('themeBtn').textContent = dark ? '☀ Light' : '☽ Dark';
+  fillSummary();
+  drawCharts();
+  drawRecall();
+  let t;
+  window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(drawCharts, 120); });
+}
+
+if (document.readyState === 'loading') window.addEventListener('DOMContentLoaded', init);
+else init();
+</script>
+</body>
+</html>

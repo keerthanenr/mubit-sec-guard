@@ -79,12 +79,14 @@ These are estimates. The Anthropic console is the real bill.
 .venv/bin/python evaluate.py --lane ai_app               # 24 calls
 .venv/bin/python seed.py --extra --lane ai_app           # send data/<lane>/seed_extra.jsonl (10 more per label)
 .venv/bin/python report.py                               # per-lane issues tally + spend
+.venv/bin/python dashboard.py                            # charts of every run so far (no calls)
 .venv/bin/python feedback.py <finding_id> <correct_label>
 ```
 
 - **Data:** `data/<lane>/seed.jsonl` (10 per label) and `data/<lane>/holdout.jsonl` (4 per label). All synthetic, and every secret is fake.
 - **Results:** `results/<lane>_<split>.jsonl`.
 - **`evaluate.py`:** for each lane it prints accuracy against our expected labels, a per-label table, and FALSE NEGATIVES (a vulnerability classified as `none`) listed separately.
+- **`dashboard.py`:** builds `results/dashboard.html` from those files — seed vs holdout accuracy, spend and calls per lane, and per-label recall. Offline, no API calls. Add `--publish` to also write `docs/dashboard.html`, the snapshot committed to the repo. `metrics.py` does the scoring for all three of `evaluate.py`, `report.py` and `dashboard.py`, so they cannot disagree.
 
 The holdout calls go through Mubit with the same lane instruction, so they also join that lane's task and may become training examples. `evaluate.py` measures the provider model against our labels. It does not measure the adapter. Mubit's own adapter test result is in the console.
 
