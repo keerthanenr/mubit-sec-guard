@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f2eb">
+  <meta name="description" content="VulHawk is a security checkpoint for AI-written code. Catch risky writes, guide the repair, and build toward reviewers that learn your team's standards.">
+  <meta property="og:title" content="VulHawk — Keep your guard up.">
+  <meta property="og:description" content="A security checkpoint at the speed of AI development. Explore the product, architecture, and business thesis.">
+  <meta property="og:url" content="https://secguard-nightshift.natalie122130.chatgpt.site">
+  <title>VulHawk — Keep your guard up.</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="controls.js?v=4" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="nav-wrap">
+    <nav class="nav shell" aria-label="Main navigation">
+      <a class="brand" href="#" aria-label="VulHawk home"><svg viewBox="0 0 32 36" aria-hidden="true"><path d="M16 2 29 7v11c0 8-8 13-13 16C11 31 3 26 3 18V7Z" fill="currentColor"/><path d="m10 17 4 4 8-9" fill="none" stroke="#f4f2eb" stroke-width="3"/></svg>VulHawk<span class="brand-dot">.</span></a>
+      <div class="nav-links"><a href="#product">Product</a><a href="#thesis">The thesis</a><a href="#architecture">Architecture</a><a href="#business">Business</a></div>
+      <a class="button small dark" href="pitch.html">Open pitch deck <span>↗</span></a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero shell">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="status-dot"></span> BUILT FOR THE AGENT ERA <span class="muted">/ NIGHT SHIFT ’26</span></div>
+        <h1>Ship at<br>agent speed.<br><span class="serif">Keep your<br>guard up.</span></h1>
+        <p class="hero-description">VulHawk checks code changes before your coding agent writes them. It flags risky patterns and gives the agent clear instructions to fix them—so your team spends less time cleaning up avoidable security mistakes.</p>
+        <div class="hero-actions"><a class="button dark" href="#product">Watch it catch a vulnerability <span>↓</span></a><a class="text-link" href="#architecture">How it works <span>↗</span></a></div>
+        <div class="hero-note"><span class="mini-shield">◇</span> Claude Code hook built · Specialist learning in development</div>
+      </div>
+      <div class="hero-art" aria-label="Illustration of a proposed code change being reviewed">
+        <div class="art-grid"></div>
+        <span class="art-label top-label">THE CHECKPOINT BEFORE THE WRITE</span>
+        <div class="code-window">
+          <div class="window-bar"><span class="window-dots"><i></i><i></i><i></i></span><span>tools / run_command.py</span><span>PY</span></div>
+          <div class="code-content"><span class="code-dim">01</span> <span class="code-purple">@mcp.tool()</span><br><span class="code-dim">02</span> <span class="code-purple">def</span> <span class="code-blue">run_command</span>(command: str):<br><span class="code-dim">03</span>     <span class="code-purple">return</span> subprocess.run(<br><span class="code-dim">04</span>         command,<br><span class="code-dim">05</span>         <span class="code-danger">shell=True</span><br><span class="code-dim">06</span>     )</div>
+          <div class="code-bottom"><span>Claude Code</span><span>Proposed write <span class="tiny-orange">●</span></span></div>
+        </div>
+        <div class="guard-verdict"><span class="verdict-symbol">!</span><div><span class="micro">VULHAWK / FINDING</span><strong>Excessive tool scope</strong><p>Expose a narrow operation.<br>Don’t hand the agent a shell.</p></div><span class="blocked-tag">BLOCKED</span></div>
+        <div class="review-line"><span class="status-dot"></span><span>Catch → repair → try again.</span><span class="micro">ILLUSTRATIVE</span></div>
+        <span class="art-label bottom-label">01 / EVERY WRITE IS A REVIEW OPPORTUNITY</span>
+      </div>
+    </section>
+
+    <div class="principle-strip"><div class="shell strip-inner"><span class="micro">THE OPPORTUNITY</span><p>Code production is accelerating.<br class="mobile-only"> <strong>Security judgement needs to keep up.</strong></p><span class="strip-arrow">↗</span></div></div>
+
+    <section class="section shell" id="product">
+      <div class="section-top"><span class="eyebrow">01 / THE PRODUCT</span><span class="micro muted">CATCH → REPAIR → CONTINUE</span></div>
+      <div class="section-heading"><h2>More code shouldn’t mean<br><span class="serif">more security work.</span></h2><p>Coding agents accelerate development. Every new change still needs scrutiny. VulHawk brings security feedback into the moment code is written, helping the agent correct problems while it’s already working.</p></div>
+      <div class="demo">
+        <div class="demo-toolbar"><div><span class="status-dot"></span> INTERACTIVE WALKTHROUGH</div><span class="micro muted">Illustrative examples · no model calls</span></div>
+        <div class="demo-body">
+          <div class="demo-sidebar"><span class="micro muted">CHOOSE A SCENARIO</span><div class="scenario-list" role="tablist" aria-label="Security scenarios"><button role="tab" aria-selected="true" id="tab-mcp" aria-controls="demo-panel" data-scenario="mcp"><span>01</span> An unrestricted MCP tool <span>↗</span></button><button role="tab" aria-selected="false" id="tab-sql" aria-controls="demo-panel" data-scenario="sql" tabindex="-1"><span>02</span> An unsafe database query <span>↗</span></button><button role="tab" aria-selected="false" id="tab-wrapper" aria-controls="demo-panel" data-scenario="wrapper" tabindex="-1"><span>03</span> Your approved wrapper <span>↗</span></button></div><div class="demo-explainer"><span class="micro">THE DISTINCTION</span><p id="scenario-explanation">A tool should expose the operation the agent needs, with a narrow permission boundary.</p></div></div>
+          <div class="demo-panel" id="demo-panel" role="tabpanel" aria-labelledby="tab-mcp" tabindex="0"><div class="demo-file"><span id="demo-filename">tools/run_command.py</span><span class="micro" id="demo-phase">PROPOSED WRITE</span></div><pre class="demo-code"><code id="demo-code"></code></pre><div class="demo-feedback" aria-live="polite"><span class="feedback-icon" id="feedback-icon">→</span><div><strong id="feedback-title">The agent proposes a change.</strong><p id="feedback-description">Run the walkthrough to see how the guard responds.</p></div><span class="micro" id="feedback-badge">READY</span></div><div class="demo-controls"><span class="micro muted" id="demo-progress">STEP 1 OF 3</span><button class="button small dark" id="demo-next">Review proposed write <span>→</span></button></div></div>
+        </div>
+      </div>
+      <div class="feature-row"><article><span class="feature-number">[ 01 ]</span><h3>In the workflow.</h3><p>Checks proposed writes and edits through a Claude Code hook. No separate review dashboard to remember.</p></article><article><span class="feature-number">[ 02 ]</span><h3>A finding with a next step.</h3><p>Return a focused label and repair hint. Let the coding agent propose a better implementation.</p></article><article><span class="feature-number">[ 03 ]</span><h3>A narrow, repeatable task.</h3><p>Stable instructions per security lane create a workload suited to task-specific adapter training.</p></article></div>
+    </section>
+
+    <section class="thesis-section" id="thesis"><div class="shell section">
+      <div class="section-top"><span class="eyebrow">02 / THE MUBIT THESIS</span><span class="micro">FROM GENERAL KNOWLEDGE TO TEAM JUDGEMENT</span></div>
+      <div class="thesis-head"><h2>The next reviewer<br>should learn from<br><span class="serif">the last review.</span></h2><div><p>A general model knows common vulnerability patterns. Your team knows its approved wrappers, sensitive tools, and permission rules.</p><p class="thesis-emphasis">The opportunity is to turn that judgement into a specialist reviewer.</p></div></div>
+      <div class="learning-flow"><article><span class="loop-number">01</span><span class="micro">CAPTURE</span><h3>Review the write.</h3><p>Run a focused classification through Mubit and capture examples of the recurring task.</p><span class="state-tag built">BUILT</span></article><article><span class="loop-number">02</span><span class="micro">CORRECT</span><h3>Teach the distinction.</h3><p>A developer corrects a finding. Local feedback exists; submission into training is the next integration.</p><span class="state-tag planned">PARTLY BUILT</span></article><article><span class="loop-number">03</span><span class="micro">SPECIALISE</span><h3>Train. Test. Earn trust.</h3><p>Use validated examples to train a narrow adapter. Compare missed findings, false alarms, latency and cost.</p><span class="state-tag planned">PRODUCT DIRECTION</span></article></div>
+      <div class="thesis-bottom"><span class="large-asterisk">✳</span><p><strong>The compounding asset is your team’s validated judgement.</strong><br>Lower model cost matters only if the specialist preserves useful review quality.</p><a href="https://docs.mubit.ai/guides/first-adapter" target="_blank" rel="noopener noreferrer">Mubit adapter workflow ↗</a></div>
+    </div></section>
+
+    <section class="section shell" id="architecture">
+      <div class="section-top"><span class="eyebrow">03 / SYSTEM ARCHITECTURE</span><a class="text-link" href="pitch.html#slide-3">View the architecture slide ↗</a></div>
+      <div class="section-heading"><h2>One checkpoint.<br><span class="serif">Two connected loops.</span></h2><p>The live loop reviews a proposed write. The learning loop is the product direction: validated feedback becomes an evaluated specialist.</p></div>
+      <div class="architecture"><div class="arch-toolbar"><span class="micro">VULHAWK / SYSTEM MAP</span><div class="legend"><span><i class="solid-key"></i> Current path</span><span><i class="dashed-key"></i> Proposed connection</span></div></div>
+        <div class="arch-diagram"><div class="path-label"><span class="status-dot"></span> THE LIVE REVIEW LOOP</div><div class="arch-flow current-flow"><button class="arch-node active" data-node="agent" aria-pressed="true"><span class="node-icon">⌘</span><strong>Coding agent</strong><span>Proposed write / edit</span></button><span class="connector" aria-hidden="true">→</span><button class="arch-node" data-node="hook" aria-pressed="false"><span class="node-icon">◇</span><strong>Guard hook</strong><span>Scope · route · secrets</span></button><span class="connector" aria-hidden="true">→</span><button class="arch-node mubit-node" data-node="mubit" aria-pressed="false"><span class="node-icon">✳</span><strong>Mubit gateway</strong><span>Record · group tasks</span></button><span class="connector" aria-hidden="true">→</span><button class="arch-node" data-node="provider" aria-pressed="false"><span class="node-icon">⊞</span><strong>Provider model</strong><span>Classify the snippet</span></button></div><div class="return-route"><span>↳ Label returned to hook</span><span class="decision-pill">Finding → block + repair hint</span><span class="decision-pill neutral">No finding → allow</span><span>↺ Agent proposes a fix</span></div><div class="learning-route"><div class="path-label"><span class="outline-dot"></span> THE SPECIALIST LEARNING LOOP <span class="micro muted">PROPOSED</span></div><div class="arch-flow"><button class="arch-node compact" data-node="feedback" aria-pressed="false"><strong>Reviewer feedback</strong><span>Local correction log</span></button><span class="connector dashed" aria-hidden="true">⇢</span><button class="arch-node compact" data-node="training" aria-pressed="false"><strong>Mubit adapter training</strong><span>Task-specific versions</span></button><span class="connector dashed" aria-hidden="true">⇢</span><button class="arch-node compact" data-node="evaluation" aria-pressed="false"><strong>Quality gate</strong><span>Fresh cases · compare cost</span></button><span class="connector dashed" aria-hidden="true">⇢</span><button class="arch-node compact future-node" data-node="specialist" aria-pressed="false"><strong>Specialist inference</strong><span>Future integration</span></button></div></div></div>
+        <div class="arch-detail" aria-live="polite"><span class="micro" id="arch-status">IMPLEMENTED</span><div><h3 id="arch-title">Start where the code is written.</h3><p id="arch-description">Claude Code’s pre-tool hook inspects proposed writes and edits in a configured directory. The prototype defaults to demo-app. It does not audit every possible way code can reach disk.</p></div><a id="arch-source" href="https://github.com/keerthanenr/mubit-sec-guard/blob/main/guard_hook.py" target="_blank" rel="noopener noreferrer">View source ↗</a></div>
+      </div>
+      <details class="implementation-details"><summary><span>Engineering reality, in plain sight.</span><span class="details-plus">+</span></summary><div class="details-grid"><div><h4>What runs today</h4><p>A scoped hook, local secret checks, provider classification through Mubit, repair hints, and local findings and spend logs. The classifier reads a bounded snippet, not the entire repository.</p></div><div><h4>What needs proving</h4><p>Correction submission, better results from trained adapters, and production adapter serving. Current Mubit docs expose adapter comparison in Try models, not an adapter model ID for app calls.</p></div><div><h4>What the hook guarantees</h4><p>It is an advisory development checkpoint. It allows writes on errors or exhausted budget, and after three blocks per file. “No finding” is not proof that code is secure.</p></div></div></details>
+    </section>
+
+    <section class="business-section" id="business"><div class="shell section">
+      <div class="section-top"><span class="eyebrow">04 / THE COMMERCIAL CASE</span><span class="micro muted">SELL REVIEW CAPACITY, NOT ANOTHER ALERT</span></div>
+      <div class="section-heading"><h2>More agent-written code.<br><span class="serif">The same review team.</span></h2><p>Start with engineering leads at small teams already building with coding agents. Win one repository by making its repeated security checks more useful.</p></div>
+      <div class="business-grid"><div class="commercial-story"><article><span class="micro">THE BUYER</span><h3>The engineering lead<br>wearing the security hat.</h3><p>A team shipping agent and MCP features, with senior developers reviewing the same permission and tool-use mistakes.</p></article><article><span class="micro">THE WEDGE</span><h3>One repo. One recurring risk.<br>One measurable pilot.</h3><p>Install the hook, review findings together, and measure useful catches, false alarms, repair acceptance and added delay.</p></article><article><span class="micro">THE EXPANSION</span><h3>From a checkpoint<br>to team-specific review.</h3><p>Shared policy packs, review history and specialist evaluation support a team subscription. Model usage can be metered separately. This is a business-model hypothesis.</p></article></div>
+        <div class="calculator"><div class="calc-top"><span class="micro">THE COST OF REPEATED REVIEW</span><span class="estimate-tag">MODEL YOUR CASE</span></div><h3>What would time back<br>be worth to your team?</h3><div class="calc-input"><label for="developers">Developers <output id="developers-value" for="developers">10</output></label><input id="developers" type="range" min="1" max="100" value="10"></div><div class="calc-input"><label for="minutes">Net minutes saved / developer / day <output id="minutes-value" for="minutes">5</output></label><input id="minutes" type="range" min="0" max="30" value="5"></div><div class="calc-input"><label for="hourly">Loaded hourly cost <output id="hourly-value" for="hourly">£60</output></label><input id="hourly" type="range" min="20" max="200" step="5" value="60"></div><div class="calc-result" aria-live="polite"><div><span class="micro">ILLUSTRATIVE MONTHLY TIME VALUE</span><strong id="monthly-value">£1,000</strong></div><span id="monthly-hours">16.7 hours / month</span></div><p class="calc-note">Your assumptions × 20 working days. Net time must include false alarms and review overhead. This is potential time value, not measured savings or ROI; subtract subscription and model costs.</p></div>
+      </div>
+      <div class="integration-callout"><span class="integration-mark">↳</span><div><span class="micro">A PRACTICAL NEXT INTEGRATION</span><h3>Put a specialist behind Semgrep findings.</h3><p>Keep the scanner’s original findings visible. Add team-context triage, capture reviewer corrections, and test whether a specialist prioritises new findings better. Proposed integration; not built into this prototype.</p></div><a href="https://docs.semgrep.dev/cli-reference" target="_blank" rel="noopener noreferrer" class="text-link">Explore the host project ↗</a></div>
+    </div></section>
+
+    <section class="section shell proof-section" id="proof"><div class="section-top"><span class="eyebrow">05 / THE PROOF THAT MATTERS</span><span class="micro muted">A CLAIM IS NOT A BENCHMARK</span></div><div class="proof-grid"><h2>Earn the next<br><span class="serif">level of trust.</span></h2><div class="proof-list"><div><span class="state-tag built">BUILT</span><p><strong>Catch → repair → continue</strong><span>The coding hook and provider classification path exist in the repository.</span></p></div><div><span class="state-tag planned">NEXT</span><p><strong>Correction → model update</strong><span>Connect reviewer feedback to Mubit training and identify the resulting version.</span></p></div><div><span class="state-tag planned">VALIDATE</span><p><strong>Useful on cases it hasn’t seen</strong><span>Compare false alarms, missed findings, latency and total model cost on fresh examples.</span></p></div></div></div></section>
+
+    <section class="closing shell"><div class="closing-symbol">✳</div><span class="eyebrow">MORE CODE. MORE CONSISTENT REVIEW.</span><h2>Your next thousand changes<br>deserve a <span class="serif">better reviewer.</span></h2><p>Start with one repository and a focused security workflow.<br>Measure the value. Then specialise.</p><div class="closing-actions"><button class="button dark" id="download-pilot">Download the pilot brief <span>↓</span></button><a class="text-link" href="pitch.html">Open pitch deck ↗</a></div></section>
+  </main>
+  <footer class="shell footer"><a class="brand" href="#">VulHawk<span class="brand-dot">.</span></a><span class="micro muted">VulHawk / NIGHT SHIFT × MUBIT</span><div><a href="https://github.com/keerthanenr/mubit-sec-guard" target="_blank" rel="noopener noreferrer">Source ↗</a><a href="https://docs.mubit.ai/" target="_blank" rel="noopener noreferrer">Mubit docs ↗</a></div></footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

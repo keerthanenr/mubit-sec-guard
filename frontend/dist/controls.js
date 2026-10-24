@@ -1,0 +1,47 @@
+'use strict';
+const $ = (selector) => document.querySelector(selector);
+const escapeHTML = (value) => String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const examples = {
+ mcp: {file:'tools/run_command.py',explain:'A tool should expose a narrow operation with a clear permission boundary.',before:'@mcp.tool()\ndef run_command(command: str):\n    return subprocess.run(\n        command, shell=True,\n        capture_output=True\n    )',after:'@mcp.tool()\ndef get_order_status(order_id: str):\n    validate_order_id(order_id)\n    require_order_access(order_id)\n    return orders.lookup(order_id)',label:'excessive_tool_scope',finding:'The tool exposes an unrestricted shell. Repair hint: expose a narrow operation, validate inputs and check access.',repair:'The example now exposes one operation with explicit checks. No finding on this snippet is not a guarantee of application security.'},
+ sql: {file:'app/login.php',explain:'Keep request values separate from SQL instructions. Bind the input rather than building a query string.',before:'<?php\n$id = $_GET["id"];\n$query = "SELECT * FROM users\n          WHERE id = " . $id;\n$result = mysqli_query($db, $query);',after:'<?php\n$id = $_GET["id"];\n$stmt = $db->prepare(\n    "SELECT * FROM users WHERE id = ?"\n);\n$stmt->bind_param("i", $id);\n$stmt->execute();',label:'sql_injection',finding:'A request parameter is concatenated into SQL. Repair hint: use a parameterised query and validate the input type.',repair:'The revised example uses a bound parameter. This illustrates one repaired pattern; authentication and access controls still need review.'},
+ wrapper: {file:'app/orders.py',explain:'Product direction: teach the reviewer which internal wrappers your team has validated.',before:'from company.db import safe_query\n\ndef order_summary(order_id):\n    return safe_query(\n        "orders.by_id",\n        {"order_id": order_id}\n    )',after:'# Human-reviewed reference example\n# This wrapper binds values internally.\nfrom company.db import safe_query\n\ndef order_summary(order_id):\n    return safe_query(\n        "orders.by_id", {"order_id": order_id}\n    )',label:'reviewer_correction',finding:'A reviewer validates this approved wrapper and corrects the finding. Reserve different examples to test whether a specialist learns the distinction.',repair:'The correction becomes a reference example in this illustration. No feedback is submitted or model update triggered. That integration is the next product step.'}
+};
+let scenario='mcp', step=0;
+function renderDemo(){
+ const x=examples[scenario], correction=scenario==='wrapper';
+ $('#demo-filename').textContent=x.file;
+ $('#scenario-explanation').textContent=x.explain;
+ $('#demo-phase').textContent=step===2?(correction?'REFERENCE EXAMPLE':'REVISED WRITE'):'PROPOSED WRITE';
+ $('#demo-code').innerHTML=(step===2?x.after:x.before).split('\n').map((line,i)=>'<span class="code-dim">'+String(i+1).padStart(2,'0')+'</span>'+escapeHTML(line)).join('\n');
+ $('.demo-feedback').className='demo-feedback'+(step===1?' blocked':step===2?' allowed':'');
+ $('#feedback-icon').textContent=['→','!','✓'][step];
+ $('#feedback-title').textContent=step===0?'The agent proposes a change.':step===1?(correction?'Teach the exception.':'Write blocked: '+x.label):(correction?'Correction represented.':'Revised example: no finding.');
+ $('#feedback-description').textContent=step===0?'Run this scripted walkthrough to see the review and repair sequence.':step===1?x.finding:x.repair;
+ $('#feedback-badge').textContent=step===0?'READY':step===1?(correction?'REVIEW':'BLOCKED'):(correction?'PLANNED':'NO FINDING');
+ $('#demo-progress').textContent='STEP '+(step+1)+' OF 3';
+ $('#demo-next').innerHTML=escapeHTML(step===0?'Review proposed write':step===1?(correction?'Show reviewer correction':'Show the agent’s repair'):'Replay walkthrough')+' <span aria-hidden="true">'+(step===2?'↺':'→')+'</span>';
+}
+document.querySelectorAll('[data-scenario]').forEach(button=>{
+ button.addEventListener('click',()=>{scenario=button.dataset.scenario;step=0;document.querySelectorAll('[data-scenario]').forEach(tab=>{tab.setAttribute('aria-selected',String(tab===button));tab.tabIndex=tab===button?0:-1;});$('#demo-panel').setAttribute('aria-labelledby',button.id);renderDemo();});
+ button.addEventListener('keydown',event=>{if(!['ArrowRight','ArrowLeft','Home','End'].includes(event.key))return;event.preventDefault();const tabs=[...document.querySelectorAll('[data-scenario]')],i=tabs.indexOf(button),j=event.key==='Home'?0:event.key==='End'?tabs.length-1:(i+(event.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;tabs[j].click();tabs[j].focus();});
+});
+$('#demo-next').addEventListener('click',()=>{step=(step+1)%3;renderDemo();});
+const repo='https://github.com/keerthanenr/mubit-sec-guard/blob/main/';
+const nodes={
+ agent:['IMPLEMENTED','Start where the code is written.','Claude Code’s pre-tool hook inspects proposed writes and edits in a configured directory. The prototype defaults to demo-app. It does not audit every way code can reach disk.',repo+'guard_hook.py'],
+ hook:['IMPLEMENTED','Scope, route, check secrets.','The hook routes files by type and imports. A local secret-pattern match can block without a model request. Otherwise a bounded snippet goes to the classifier.',repo+'guard_hook.py'],
+ mubit:['IMPLEMENTED','Capture a repeatable security task.','Stable lane instructions let Mubit group recorded checks into tasks. Mubit forwards current application calls to the provider. The guard does not yet invoke a trained adapter.','https://docs.mubit.ai/concepts'],
+ provider:['IMPLEMENTED','Return a focused classification.','The current route uses Claude Haiku through Mubit. The classifier asks for one lane-specific label. Evaluate the model’s judgement against expected labels and human review.',repo+'classifier.py'],
+ feedback:['LOCAL ONLY','Capture the reviewer’s correction.','The feedback script records original and corrected labels locally. Submission to Mubit is a stub, so a correction does not currently produce a model update.',repo+'feedback.py'],
+ training:['PROPOSED CONNECTION','Train a task-specific adapter.','Mubit documents grouping kept examples and training versioned adapters. Connecting VulHawk’s validated corrections to that flow is the next integration.','https://docs.mubit.ai/guides/first-adapter'],
+ evaluation:['TO VALIDATE','Test on cases it has not seen.','Compare missed findings, false alarms, latency and cost on reserved examples. Current evaluation measures the provider path, not demonstrated adapter performance.',repo+'evaluate.py'],
+ specialist:['FUTURE INTEGRATION','Earn a place in the live review loop.','Replace the provider only after quality and economics hold up. Production adapter inference is not connected; public docs do not expose an adapter model ID for app calls.','https://docs.mubit.ai/guides/model-ids']
+};
+document.querySelectorAll('[data-node]').forEach(button=>button.addEventListener('click',()=>{document.querySelectorAll('[data-node]').forEach(node=>{node.classList.toggle('active',node===button);node.setAttribute('aria-pressed',String(node===button));});const[status,title,description,source]=nodes[button.dataset.node];$('#arch-status').textContent=status;$('#arch-title').textContent=title;$('#arch-description').textContent=description;$('#arch-source').href=source;}));
+const pounds=new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP',maximumFractionDigits:0});
+function calculate(){const developers=Number($('#developers').value),minutes=Number($('#minutes').value),hourly=Number($('#hourly').value),hours=developers*minutes*20/60;$('#developers-value').textContent=developers;$('#minutes-value').textContent=minutes+' min';$('#hourly-value').textContent=pounds.format(hourly);$('#monthly-value').textContent=pounds.format(hours*hourly);$('#monthly-hours').textContent=hours.toFixed(1)+' hours / month';}
+['developers','minutes','hourly'].forEach(id=>$('#'+id).addEventListener('input',calculate));
+function openPitch(){ window.location.replace('pitch.html'); }
+window.addEventListener('hashchange',()=>{if(location.hash==='#pitch')openPitch();});
+$('#download-pilot').addEventListener('click',()=>{const brief='VULHAWK — REPOSITORY PILOT\n\n1. Choose one repository and bounded scope.\n2. Agree one recurring security risk.\n3. Reserve fresh cases for evaluation.\n4. Measure useful findings, false alarms, accepted repairs and check delay.\n5. Compare time value against subscription and model usage costs.\n\nMUBIT\nRecorded checks can form recurring tasks for adapter training and testing. Connecting validated corrections and production specialist serving is the next integration.\n\nCURRENT BOUNDARIES\nThe hook permits writes on errors, exhausted budget and after three blocks per file. No finding does not guarantee secure code. This website is an illustrative walkthrough, not a live scanner.\n\nhttps://github.com/keerthanenr/mubit-sec-guard\n';const url=URL.createObjectURL(new Blob([brief],{type:'text/plain;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download='vulhawk-pilot-brief.txt';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);$('#toast').textContent='Pilot brief download requested.';$('#toast').classList.add('visible');setTimeout(()=>$('#toast').classList.remove('visible'),3500);});
+renderDemo();calculate();if(location.hash==='#pitch')openPitch();
