@@ -1,0 +1,14 @@
+.env
+.venv
+.git
+results
+data
+tests
+demo-app
+docs
+scripts
+client
+__pycache__
+*.jsonl
+spend.*
+.guard_state.json

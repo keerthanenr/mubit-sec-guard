@@ -50,18 +50,24 @@ def _imports(code, modules):
     return re.search(pattern, code, re.M) is not None
 
 
-def route(file_path, code):
-    """The lanes this write belongs to (possibly several), or [] to ignore it."""
+def route(file_path, code, read_existing=True):
+    """The lanes this write belongs to (possibly several), or [] to ignore it.
+
+    read_existing=False routes on the submitted code only (the hosted API must
+    never read its own disk based on a client-supplied path).
+    """
     if not file_path or not Path(file_path).resolve().is_relative_to(config.scope_dir()):
         return []
     lower = file_path.lower()
     # An Edit may not include the imports, so also look at the file being edited.
-    try:
-        existing = Path(file_path).read_text(errors="ignore")
-        if lower.endswith(".ipynb"):
-            existing = _notebook_code(existing)
-    except OSError:
-        existing = ""
+    existing = ""
+    if read_existing:
+        try:
+            existing = Path(file_path).read_text(errors="ignore")
+            if lower.endswith(".ipynb"):
+                existing = _notebook_code(existing)
+        except OSError:
+            existing = ""
     lanes = []
     for lane in config.LANES.values():
         if lower.endswith(lane.always_suffixes or ("\0",)):
