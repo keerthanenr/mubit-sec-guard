@@ -10,5 +10,7 @@ scripts
 client
 __pycache__
 *.jsonl
-spend.*
+spend.json
+spend.lock
+spend.tmp
 .guard_state.json
