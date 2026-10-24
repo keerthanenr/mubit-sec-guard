@@ -48,6 +48,8 @@ class HookTest(unittest.TestCase):
             "MUBIT_BASE_URL": "http://127.0.0.1:9/v1",
             # Most tests use made-up /proj paths, so scan everything; scoping has its own test.
             "GUARD_SCOPE_DIR": "/",
+            # Empty, not unset: config.load_env() would otherwise pick up GUARD_MODE from .env.
+            "GUARD_MODE": "",
         }
         self.env.pop("GUARD_DISABLED", None)
 
@@ -208,6 +210,33 @@ class HookTest(unittest.TestCase):
         result = self.run_hook(payload("Write", "/proj/login.php", content=SQLI), GUARD_OFFLINE="0")
         self.assertEqual(result.returncode, 0)
         self.assertEqual(self.findings()[-1]["decision"], "error")
+
+
+    def test_warn_mode_allows_and_reports(self):
+        result = self.run_hook(payload("Write", "/proj/login.php", content=SQLI), GUARD_MODE="warn")
+        self.assertEqual(result.returncode, 0)
+        out = json.loads(result.stdout)
+        self.assertIn("sql_injection", out["systemMessage"])
+        self.assertIn("sql_injection", out["hookSpecificOutput"]["additionalContext"])
+        self.assertNotIn("permissionDecision", out["hookSpecificOutput"])
+        self.assertEqual(self.findings()[-1]["decision"], "warn")
+
+    def test_ask_mode_hands_decision_to_user(self):
+        result = self.run_hook(payload("Write", "/proj/login.php", content=SQLI), GUARD_MODE="ask")
+        self.assertEqual(result.returncode, 0)
+        out = json.loads(result.stdout)["hookSpecificOutput"]
+        self.assertEqual(out["permissionDecision"], "ask")
+        self.assertIn("Use prepared statements", out["permissionDecisionReason"])
+        self.assertEqual(self.findings()[-1]["decision"], "ask")
+
+    def test_non_block_modes_print_nothing_for_safe_code(self):
+        for mode in ("warn", "ask"):
+            result = self.run_hook(payload("Write", "/proj/safe.php", content=SAFE), GUARD_MODE=mode)
+            self.assertEqual((result.returncode, result.stdout), (0, ""), mode)
+
+    def test_unknown_mode_falls_back_to_block(self):
+        result = self.run_hook(payload("Write", "/proj/login.php", content=SQLI), GUARD_MODE="loud")
+        self.assertEqual(result.returncode, 2)
 
 
 if __name__ == "__main__":

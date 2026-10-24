@@ -67,6 +67,7 @@ The old tasks they created ("PHP security reviewer", "… 2") are dead ends. Wit
 Switches:
 - `GUARD_OFFLINE=1`: regex stub instead of Mubit, no network calls.
 - `GUARD_DISABLED=1`: the hook allows everything.
+- `GUARD_MODE`: what a finding does. `block` (default) stops the write. `warn` lets it through, shows you a ⚠ warning and tells Claude the hint so it can fix it. `ask` shows the finding in Claude Code's permission prompt and you choose. Set it in `.env` or the shell that starts Claude Code.
 - `GUARD_BUDGET_USD`: spend cap, default `50`.
 
 ## Spend cap
@@ -113,6 +114,7 @@ The holdout calls go through Mubit with the same lane instruction, so they also 
 2. **Local secrets check.** `local_checks.py` looks for `sk_live_`, `sk-…`, `AKIA…`, and `api_key`/`secret` set to a long literal. A match returns `hardcoded_secret` with no network call, and the value is redacted.
 3. **Classify.** Otherwise the lane's classifier asks Mubit for a label.
 4. **Block.** Any label other than `none` or `unparseable` blocks the write (exit 2) with `guard: <label> in <file> (<lane>). <fix hint>`.
+   With `GUARD_MODE=warn` or `ask` the hook exits 0 and prints hook JSON instead (`systemMessage` + `additionalContext`, or `permissionDecision: "ask"`); findings are logged as `warn` / `ask`, and the per-file cap only applies to blocks.
 5. **Cap per file.** After 3 blocks on the same file, further writes are allowed and logged as `allowed_by_cap`.
 6. **Fail open.** If Mubit errors, times out or the budget is spent, the write is allowed and logged.
 7. **Log.** Every decision is appended to `findings.jsonl`, tagged with its lane.

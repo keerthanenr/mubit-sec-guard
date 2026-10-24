@@ -501,6 +501,15 @@ def disabled():
     return os.environ.get("GUARD_DISABLED") == "1"
 
 
+GUARD_MODES = ("block", "warn", "ask")
+
+
+def guard_mode():
+    """What a finding does: block the write (default), warn and allow it, or ask the user."""
+    mode = (os.environ.get("GUARD_MODE") or "block").strip().lower()
+    return mode if mode in GUARD_MODES else "block"
+
+
 def scope_dir():
     """The hook only scans files under this folder (GUARD_SCOPE_DIR, default
     demo-app/ in the project), so it never scans this project's own scripts."""

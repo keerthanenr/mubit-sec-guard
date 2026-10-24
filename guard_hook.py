@@ -171,6 +171,10 @@ def main():
     if not findings:
         return 0
 
+    mode = config.guard_mode()
+    if mode != "block":
+        return _report(mode, findings, file_path, redacted)
+
     state_path = config.state_dir() / ".guard_state.json"
     state = _load_state(state_path)
     blocks = state.get(file_path, 0)
@@ -182,9 +186,33 @@ def main():
     state_path.write_text(json.dumps(state, indent=2))
     for lane, label, rid in findings:
         log_finding(lane, file_path, label, rid, "block", redacted)
-        hint = config.LANES[lane].fix_hints.get(label, config.SECRET_HINT)
-        print(f"guard: {label} in {file_path} ({lane}). {hint}", file=sys.stderr)
+        print(_message(lane, label, file_path), file=sys.stderr)
     return 2
+
+
+def _message(lane, label, file_path):
+    hint = config.LANES[lane].fix_hints.get(label, config.SECRET_HINT)
+    return f"guard: {label} in {file_path} ({lane}). {hint}"
+
+
+def _report(mode, findings, file_path, redacted):
+    """warn: allow the write, show the user a warning and tell Claude.
+    ask: hand the decision to the user's permission prompt. Exit 0 either way."""
+    messages = []
+    for lane, label, rid in findings:
+        log_finding(lane, file_path, label, rid, mode, redacted)
+        messages.append(_message(lane, label, file_path))
+    text = "\n".join(messages)
+    if mode == "warn":
+        # No permissionDecision, so the user's normal permission rules still apply.
+        output = {"systemMessage": "⚠ " + text,
+                  "hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": text}}
+    else:
+        output = {"hookSpecificOutput": {"hookEventName": "PreToolUse",
+                                         "permissionDecision": "ask",
+                                         "permissionDecisionReason": text}}
+    print(json.dumps(output))
+    return 0
 
 
 if __name__ == "__main__":
