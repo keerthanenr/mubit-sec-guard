@@ -90,3 +90,4 @@ Tasks → each lane appears as a task named from its instruction ("PHP security 
 
 - Use the guard: start Claude Code in this folder; the hook in `.claude/settings.json` checks writes under `demo-app/`. Live checks also feed the tasks.
 - `report.py` shows common issues and spend per lane. `GUARD_BUDGET_USD` caps spend (default $50); delete `spend.json` for a fresh ledger in a new account.
+- `python dashboard.py` charts the whole rebuild — seed vs holdout accuracy, spend and calls per lane, per-label recall — into `results/dashboard.html`. It only reads `results/` and `spend.json`, so it is free to re-run after every lane. `--publish` also writes `docs/dashboard.html`, the snapshot committed to the repo; `--model <dir>` scores a holdout run from a different teacher model.

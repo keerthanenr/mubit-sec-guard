@@ -1,23 +1,17 @@
 """Run data/<lane>/holdout.jsonl through classify and score it per lane."""
-from collections import Counter
-
-import config
+import metrics
 import spend
 from seed import parse_args, run_batch
 
 
 def summarize(lane, results):
-    total = len(results)
-    correct = sum(r["got"] == r["expected"] for r in results)
+    correct, total = metrics.accuracy(results)
     print(f"\n### {lane}: accuracy {correct}/{total} = {correct / total:.0%}\n" if total
           else f"\n### {lane}: no results.")
 
-    n = Counter(r["expected"] for r in results)
-    hit = Counter(r["expected"] for r in results if r["got"] == r["expected"])
     print(f"{'label':<26}{'n':>4}{'correct':>9}{'recall':>8}")
-    for label in config.LANES[lane].labels:
-        if n[label]:
-            print(f"{label:<26}{n[label]:>4}{hit[label]:>9}{hit[label] / n[label]:>8.0%}")
+    for label, (hit, n) in metrics.label_recall(lane, results).items():
+        print(f"{label:<26}{n:>4}{hit:>9}{hit / n:>8.0%}")
 
     misses = [r for r in results if r["got"] != r["expected"]]
     false_negatives = [r for r in misses if r["expected"] != "none" and r["got"] == "none"]

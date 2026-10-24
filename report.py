@@ -1,15 +1,9 @@
 """Print the "common issues" tally per lane, plus per-lane spend."""
-import json
 from collections import Counter
 
 import config
 import spend
-
-
-def read_jsonl(path):
-    if not path.exists():
-        return []
-    return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+from metrics import read_jsonl
 
 
 def print_tally(title, counter):
