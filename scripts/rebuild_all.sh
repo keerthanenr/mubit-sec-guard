@@ -44,4 +44,4 @@ echo "== Holdout (unrecorded):"
 grep -h -E "^### |FALSE NEGATIVES" results/rebuild/*.log || true
 echo
 grep -l " error:" results/rebuild/*.log 2>/dev/null && echo "^ logs with errors, check them" || echo "No errors."
-$PY -c "import seed; seed.print_spend()"
+$PY -c "import spend; d = spend.load(); print('Est. total spend: $%.4f' % d['total_usd'])"
