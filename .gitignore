@@ -15,3 +15,6 @@ spend.tmp
 .claude/settings.local.json
 .DS_Store
 .vulhawk-keys
+
+.omc/
+.python-version
