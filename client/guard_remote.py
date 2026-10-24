@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """VulHawk client: a Claude Code PreToolUse hook that asks the hosted VulHawk guard. Python stdlib only.
 
-Setup: set GUARD_URL (e.g. https://guard.example.com) and GUARD_KEY (your guard key),
-then add to .claude/settings.json:
+Install from your project folder:  curl -fsSL <VulHawk URL>/install | sh -s -- <your key>
+
+Or by hand: set GUARD_URL and GUARD_KEY (or put them in ~/.config/vulhawk/config), then add
+to .claude/settings.json:
 
   {"hooks": {"PreToolUse": [{"matcher": "Write|Edit|MultiEdit|NotebookEdit",
      "hooks": [{"type": "command", "command": "python3 \\"$CLAUDE_PROJECT_DIR/.claude/guard_remote.py\\"", "timeout": 30}]}]}}
@@ -58,8 +60,23 @@ def extract(tool, ti, path):
     return ""
 
 
+def settings():
+    """GUARD_URL / GUARD_KEY from the environment, else from ~/.config/vulhawk/config (written by the installer)."""
+    values = {}
+    path = os.path.join(os.path.expanduser("~"), ".config", "vulhawk", "config")
+    try:
+        for line in open(path):
+            k, _, v = line.strip().partition("=")
+            values[k] = v
+    except OSError:
+        pass
+    url = os.environ.get("GUARD_URL") or values.get("GUARD_URL", "")
+    key = os.environ.get("GUARD_KEY") or values.get("GUARD_KEY", "")
+    return url.rstrip("/"), key
+
+
 def main():
-    url, key = os.environ.get("GUARD_URL", "").rstrip("/"), os.environ.get("GUARD_KEY", "")
+    url, key = settings()
     if os.environ.get("GUARD_DISABLED") == "1" or not url or not key:
         return 0
     try:

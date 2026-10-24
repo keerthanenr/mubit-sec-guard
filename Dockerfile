@@ -9,6 +9,7 @@ RUN pip install --no-cache-dir -r requirements-server.txt
 COPY config.py classifier.py local_checks.py guard_hook.py spend.py ./
 COPY server ./server
 COPY skills ./skills
+COPY client ./client
 RUN useradd --create-home vulhawk && mkdir -p /tmp/vulhawk && chown vulhawk /tmp/vulhawk
 USER vulhawk
 EXPOSE 8000

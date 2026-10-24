@@ -143,3 +143,54 @@ class RemoteClientTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class InstallerTest(unittest.TestCase):
+    def test_install_script_sets_up_project_and_key(self):
+        import functools
+        from http.server import SimpleHTTPRequestHandler
+        from fastapi.testclient import TestClient
+
+        handler = functools.partial(SimpleHTTPRequestHandler, directory=str(ROOT))
+        handler.log_message = lambda *a: None
+        files = HTTPServer(("127.0.0.1", 0), handler)
+        threading.Thread(target=files.serve_forever, daemon=True).start()
+        url = f"http://127.0.0.1:{files.server_port}"
+        try:
+            with mock.patch.dict(os.environ, {"PUBLIC_URL": url, "GUARD_API_KEYS": "k"}):
+                from server import app as server_app
+                client = TestClient(server_app.app)
+                script = client.get("/install").text
+                self.assertIn(f'URL="{url}"', script)
+                self.assertEqual(client.get("/client/guard_remote.py").text,
+                                 (ROOT / "client" / "guard_remote.py").read_text())
+
+            with tempfile.TemporaryDirectory() as project, tempfile.TemporaryDirectory() as home:
+                Path(project, ".claude").mkdir()
+                Path(project, ".claude", "settings.json").write_text('{"permissions": {"allow": ["Bash(ls)"]}}')
+                env = {**os.environ, "HOME": home}
+                for _ in range(2):  # running twice must not duplicate the hook
+                    r = subprocess.run(["sh", "-s", "--", "vh_test_key"], input=script, cwd=project,
+                                       capture_output=True, text=True, env=env, timeout=60)
+                    self.assertEqual(r.returncode, 0, r.stderr)
+                settings = json.loads(Path(project, ".claude", "settings.json").read_text())
+                self.assertEqual(settings["permissions"], {"allow": ["Bash(ls)"]})
+                self.assertEqual(len(settings["hooks"]["PreToolUse"]), 1)
+                self.assertTrue(Path(project, ".claude", "guard_remote.py").exists())
+                config = Path(home, ".config", "vulhawk", "config")
+                self.assertEqual(config.read_text(), f"GUARD_URL={url}\nGUARD_KEY=vh_test_key\n")
+                self.assertEqual(oct(config.stat().st_mode & 0o777), "0o600")
+        finally:
+            files.shutdown()
+
+    def test_client_reads_installer_config(self):
+        with tempfile.TemporaryDirectory() as home:
+            cfg = Path(home, ".config", "vulhawk")
+            cfg.mkdir(parents=True)
+            (cfg / "config").write_text("GUARD_URL=http://127.0.0.1:9\nGUARD_KEY=vh_x\n")
+            env = {k: v for k, v in os.environ.items() if k not in ("GUARD_URL", "GUARD_KEY")}
+            env["HOME"] = home
+            code = ("import sys; sys.path.insert(0, 'client'); import guard_remote as g; "
+                    "print(g.settings())")
+            out = subprocess.run([sys.executable, "-c", code], cwd=ROOT, capture_output=True, text=True, env=env)
+            self.assertIn("('http://127.0.0.1:9', 'vh_x')", out.stdout)

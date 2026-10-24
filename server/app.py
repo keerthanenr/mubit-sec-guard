@@ -3,6 +3,8 @@
 POST /v1/scan          check one file write (Bearer guard key required)
 GET  /v1/skills        list skill ids
 GET  /v1/skills/{id}   a skill's markdown (public)
+GET  /install          one-line installer script (curl ... | sh -s -- KEY)
+GET  /client/guard_remote.py   the client hook
 GET  /healthz          liveness
 
 Env: MUBIT_API_KEY, MUBIT_BASE_URL, MUBIT_MODEL (as for the hook), GUARD_API_KEYS
@@ -16,7 +18,7 @@ import time
 from collections import defaultdict, deque
 from pathlib import Path
 
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
 
@@ -59,6 +61,22 @@ def _authorize(authorization):
 @app.get("/healthz")
 def healthz():
     return {"ok": True, "service": "VulHawk", "lanes": len(config.LANES), "model": config.model()}
+
+
+def _public_url(request):
+    """The URL people reach us on (PUBLIC_URL, else this request's host over https)."""
+    return os.environ.get("PUBLIC_URL") or f"https://{request.headers.get('host', 'localhost')}"
+
+
+@app.get("/install", response_class=PlainTextResponse)
+def install(request: Request):
+    script = (Path(__file__).parent / "install.sh").read_text()
+    return script.replace("__URL__", _public_url(request).rstrip("/"))
+
+
+@app.get("/client/guard_remote.py", response_class=PlainTextResponse)
+def client_file():
+    return (ROOT / "client" / "guard_remote.py").read_text()
 
 
 @app.get("/v1/skills")
