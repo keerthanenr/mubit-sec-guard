@@ -1,0 +1,24 @@
+{"snippet": "class UserRepo {\n    private $db;\n    public function findByName($name) {\n        $sql = \"SELECT * FROM users WHERE name = '\" . $name . \"'\";\n        return $this->db->query($sql);\n    }\n}", "expected": "sql_injection"}
+{"snippet": "$dir = $_GET['dir'];\n$q = \"SELECT * FROM logs ORDER BY created_at $dir\";\n$res = mysqli_query($link, $q);", "expected": "sql_injection"}
+{"snippet": "function docsFor($db) {\n    $where = \"id = \" . $_POST['id'] . \" OR owner = '\" . $_POST['owner'] . \"'\";\n    return $db->query(\"SELECT * FROM docs WHERE $where\");\n}", "expected": "sql_injection"}
+{"snippet": "$db->query(\"INSERT INTO feedback (msg) VALUES ('\" . $_POST['msg'] . \"')\");", "expected": "sql_injection"}
+{"snippet": "$name = $_GET['name'];\necho <<<HTML\n<div class=\"card\">\n  <h3>$name</h3>\n</div>\nHTML;", "expected": "xss"}
+{"snippet": "function alertBox() { ?>\n  <div class=\"alert\"><?php echo $_GET['msg']; ?></div>\n<?php }", "expected": "xss"}
+{"snippet": "$cb = $_GET['cb'];\necho \"<script>{$cb}(data);</script>\";", "expected": "xss"}
+{"snippet": "public function show(Request $request) {\n    return response('<p>' . $request->input('bio') . '</p>');\n}", "expected": "xss"}
+{"snippet": "return [\n    'mysql' => [\n        'host' => 'db.internal',\n        'username' => 'app',\n        'password' => 'FAKEprodDBpass!2024',\n    ],\n];", "expected": "hardcoded_secret"}
+{"snippet": "$slack = new Client(['token' => 'xoxb-FAKE-0000000000-EXAMPLE']);", "expected": "hardcoded_secret"}
+{"snippet": "$secret_key = \"FAKE_EXAMPLE_HMAC_SECRET_9f8e7d6c5b4a\";", "expected": "hardcoded_secret"}
+{"snippet": "curl_setopt($ch, CURLOPT_USERPWD, 'admin:FAKEadminPass99');", "expected": "hardcoded_secret"}
+{"snippet": "include($_GET['p'] . '.php');", "expected": "path_traversal"}
+{"snippet": "$f = str_replace('../', '', $_GET['f']);\necho file_get_contents('files/' . $f);", "expected": "path_traversal"}
+{"snippet": "public function export(Request $req) {\n    return new BinaryFileResponse(storage_path('exports/' . $req->query('name')));\n}", "expected": "path_traversal"}
+{"snippet": "$zip = new ZipArchive();\n$zip->open($_FILES['z']['tmp_name']);\n$zip->extractTo('/var/www/' . $_POST['dir']);", "expected": "path_traversal"}
+{"snippet": "$settings = unserialize($_COOKIE['data']);", "expected": "unsafe_deserialization"}
+{"snippet": "$item = unserialize(hex2bin($_GET['item']));", "expected": "unsafe_deserialization"}
+{"snippet": "function fromToken($t) {\n    [$sig, $blob] = explode('.', $t);\n    return unserialize(base64_decode($blob));\n}\necho fromToken($_COOKIE['auth'])->name;", "expected": "unsafe_deserialization"}
+{"snippet": "$o = unserialize($_POST['o'], ['allowed_classes' => true]);", "expected": "unsafe_deserialization"}
+{"snippet": "$id = (int) $_GET['id'];\n$r = $conn->query(\"SELECT * FROM posts WHERE id = $id\");", "expected": "none"}
+{"snippet": "$name = htmlspecialchars($_GET['name'], ENT_QUOTES, 'UTF-8');\necho <<<HTML\n<h3>$name</h3>\nHTML;", "expected": "none"}
+{"snippet": "$data = json_decode(file_get_contents('php://input'), true);\n$qty = (int) ($data['qty'] ?? 0);", "expected": "none"}
+{"snippet": "$pages = ['home' => 'home.php', 'about' => 'about.php'];\n$page = $pages[$_GET['p'] ?? 'home'] ?? 'home.php';\ninclude __DIR__ . '/pages/' . $page;", "expected": "none"}

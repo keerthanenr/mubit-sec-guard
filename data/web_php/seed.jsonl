@@ -1,0 +1,60 @@
+{"snippet": "function getUser($conn) {\n    $id = $_GET['id'];\n    return mysqli_query($conn, \"SELECT * FROM users WHERE id = $id\");\n}", "expected": "sql_injection"}
+{"snippet": "function findByEmail(PDO $db, $email) {\n    return $db->query(\"SELECT id, name FROM accounts WHERE email = '\" . $email . \"'\")->fetch();\n}", "expected": "sql_injection"}
+{"snippet": "$sort = $_GET['sort'];\n$rows = $pdo->query(\"SELECT * FROM products ORDER BY \" . $sort)->fetchAll();", "expected": "sql_injection"}
+{"snippet": "function deleteOrder($mysqli) {\n    $oid = $_POST['order_id'];\n    $mysqli->query(\"DELETE FROM orders WHERE order_id = \" . $oid);\n}", "expected": "sql_injection"}
+{"snippet": "function search($db) {\n    $term = $_REQUEST['q'];\n    $sql = \"SELECT title FROM posts WHERE title LIKE '%{$term}%'\";\n    return $db->query($sql);\n}", "expected": "sql_injection"}
+{"snippet": "function login($conn) {\n    $u = $_POST['user'];\n    $p = $_POST['pass'];\n    $res = mysqli_query($conn, \"SELECT * FROM users WHERE username='$u' AND password='$p'\");\n    return mysqli_num_rows($res) > 0;\n}", "expected": "sql_injection"}
+{"snippet": "$category = $_COOKIE['cat'];\n$stmt = $pdo->prepare(\"SELECT * FROM items WHERE category = '$category'\");\n$stmt->execute();", "expected": "sql_injection"}
+{"snippet": "function updateEmail($db, $uid) {\n    $email = $_POST['email'];\n    $db->exec(sprintf(\"UPDATE users SET email = '%s' WHERE id = %d\", $email, $uid));\n}", "expected": "sql_injection"}
+{"snippet": "$ids = implode(',', $_GET['ids']);\n$result = $conn->query(\"SELECT * FROM files WHERE id IN ($ids)\");", "expected": "sql_injection"}
+{"snippet": "function countByStatus($pg) {\n    $status = $_GET['status'];\n    return pg_query($pg, \"SELECT count(*) FROM tickets WHERE status = '\" . $status . \"'\");\n}", "expected": "sql_injection"}
+{"snippet": "echo \"Hello, \" . $_GET['name'];", "expected": "xss"}
+{"snippet": "function renderComment(array $c) {\n    echo '<div class=\"comment\">' . $c['body'] . '</div>';\n}", "expected": "xss"}
+{"snippet": "<?php $q = $_GET['q']; ?>\n<p>Results for <?= $q ?></p>", "expected": "xss"}
+{"snippet": "function errorPage() {\n    $msg = $_REQUEST['error'];\n    print(\"<h1>Error: $msg</h1>\");\n}", "expected": "xss"}
+{"snippet": "$redirect = $_GET['next'];\necho \"<a href=\\\"$redirect\\\">Continue</a>\";", "expected": "xss"}
+{"snippet": "function greet() {\n    $nick = $_POST['nickname'];\n    return \"<span class='nick'>\" . $nick . \"</span>\";\n}", "expected": "xss"}
+{"snippet": "echo '<script>var userId = \"' . $_GET['uid'] . '\";</script>';", "expected": "xss"}
+{"snippet": "printf('<input type=\"text\" name=\"city\" value=\"%s\">', $_POST['city']);", "expected": "xss"}
+{"snippet": "function listTags() {\n    $tags = $_GET['tags'] ?? [];\n    foreach ($tags as $t) {\n        echo \"<li>$t</li>\";\n    }\n}", "expected": "xss"}
+{"snippet": "echo \"<img src='/avatars/\" . $_GET['avatar'] . \"'>\";", "expected": "xss"}
+{"snippet": "$stripe = new \\Stripe\\StripeClient('sk_live_FAKE_EXAMPLE_0001');", "expected": "hardcoded_secret"}
+{"snippet": "define('DB_PASSWORD', 'Pr0dFAKEpassw0rd!');", "expected": "hardcoded_secret"}
+{"snippet": "$config = [\n    'api_key' => 'FAKE0000EXAMPLEKEY1111abcd2222',\n    'region' => 'eu-west-1',\n];", "expected": "hardcoded_secret"}
+{"snippet": "function awsClient() {\n    return new S3Client(['credentials' => [\n        'key' => 'AKIAFAKEEXAMPLE00001',\n        'secret' => 'FAKEsecretEXAMPLEvalue0000000000000000',\n    ]]);\n}", "expected": "hardcoded_secret"}
+{"snippet": "$pdo = new PDO('mysql:host=db;dbname=shop', 'root', 'FAKE_rootpass_123');", "expected": "hardcoded_secret"}
+{"snippet": "const OPENAI_KEY = 'sk-FAKEexample000000000000000000000000';", "expected": "hardcoded_secret"}
+{"snippet": "$jwtSecret = 'FAKE-jwt-signing-secret-do-not-use';\nfunction sign($p) {\n    global $jwtSecret;\n    return hash_hmac('sha256', $p, $jwtSecret);\n}", "expected": "hardcoded_secret"}
+{"snippet": "$mailer->setAuth('noreply@example.com', 'FAKEsmtpPassword2024');", "expected": "hardcoded_secret"}
+{"snippet": "class GitHubSync {\n    private $token = 'ghp_FAKEEXAMPLE000000000000000000000000';\n}", "expected": "hardcoded_secret"}
+{"snippet": "$headers = ['Authorization: Bearer FAKEbearerTOKEN00000000000000000'];", "expected": "hardcoded_secret"}
+{"snippet": "$file = $_GET['file'];\nreadfile('/var/www/uploads/' . $file);", "expected": "path_traversal"}
+{"snippet": "function download() {\n    $name = $_GET['doc'];\n    $path = __DIR__ . '/docs/' . $name;\n    header('Content-Type: application/pdf');\n    echo file_get_contents($path);\n}", "expected": "path_traversal"}
+{"snippet": "include $_GET['page'];", "expected": "path_traversal"}
+{"snippet": "function deleteAvatar() {\n    unlink('avatars/' . $_POST['filename']);\n}", "expected": "path_traversal"}
+{"snippet": "$log = $_REQUEST['log'];\n$fh = fopen(\"/var/log/app/$log\", 'r');\necho fread($fh, 4096);", "expected": "path_traversal"}
+{"snippet": "function loadTemplate() {\n    $tpl = $_GET['tpl'];\n    return file_get_contents(\"templates/\" . $tpl . \".html\");\n}", "expected": "path_traversal"}
+{"snippet": "$lang = $_COOKIE['lang'];\nrequire_once \"lang/{$lang}.php\";", "expected": "path_traversal"}
+{"snippet": "function saveUpload() {\n    $dest = 'uploads/' . $_POST['target'];\n    move_uploaded_file($_FILES['f']['tmp_name'], $dest);\n}", "expected": "path_traversal"}
+{"snippet": "$img = $_GET['img'];\n$data = file_get_contents('images/' . $img);\nheader('Content-Type: image/png');\necho $data;", "expected": "path_traversal"}
+{"snippet": "function readConfig() {\n    $section = $_GET['section'];\n    return parse_ini_file(CONFIG_DIR . '/' . $section);\n}", "expected": "path_traversal"}
+{"snippet": "$prefs = unserialize($_COOKIE['prefs']);", "expected": "unsafe_deserialization"}
+{"snippet": "function restoreCart() {\n    $cart = unserialize(base64_decode($_POST['cart']));\n    return $cart;\n}", "expected": "unsafe_deserialization"}
+{"snippet": "$obj = unserialize(file_get_contents('php://input'));", "expected": "unsafe_deserialization"}
+{"snippet": "function loadSession($raw) {\n    return unserialize($raw);\n}\n$s = loadSession($_GET['s']);", "expected": "unsafe_deserialization"}
+{"snippet": "$state = unserialize(urldecode($_REQUEST['state']));", "expected": "unsafe_deserialization"}
+{"snippet": "function importBackup() {\n    $tmp = $_FILES['backup']['tmp_name'];\n    return unserialize(file_get_contents($tmp));\n}", "expected": "unsafe_deserialization"}
+{"snippet": "$user = unserialize(gzuncompress(base64_decode($_COOKIE['remember'])));", "expected": "unsafe_deserialization"}
+{"snippet": "if (isset($_POST['payload'])) {\n    $job = unserialize($_POST['payload']);\n    $job->run();\n}", "expected": "unsafe_deserialization"}
+{"snippet": "function fromQueue() {\n    $msg = $_POST;\n    return unserialize($msg['body']);\n}", "expected": "unsafe_deserialization"}
+{"snippet": "$filters = unserialize(stripslashes($_GET['filters']));", "expected": "unsafe_deserialization"}
+{"snippet": "function getUser(PDO $db) {\n    $stmt = $db->prepare('SELECT * FROM users WHERE id = ?');\n    $stmt->execute([$_GET['id']]);\n    return $stmt->fetch();\n}", "expected": "none"}
+{"snippet": "echo 'Hello, ' . htmlspecialchars($_GET['name'], ENT_QUOTES, 'UTF-8');", "expected": "none"}
+{"snippet": "$file = basename($_GET['file']);\nreadfile('/var/www/uploads/' . $file);", "expected": "none"}
+{"snippet": "$prefs = json_decode($_COOKIE['prefs'], true);", "expected": "none"}
+{"snippet": "$key = getenv('STRIPE_SECRET_KEY');\n$stripe = new \\Stripe\\StripeClient($key);", "expected": "none"}
+{"snippet": "function add(int $a, int $b): int {\n    return $a + $b;\n}", "expected": "none"}
+{"snippet": "function slugify(string $s): string {\n    return strtolower(trim(preg_replace('/[^a-z0-9]+/i', '-', $s), '-'));\n}", "expected": "none"}
+{"snippet": "$stmt = $mysqli->prepare(\"UPDATE users SET email = ? WHERE id = ?\");\n$stmt->bind_param('si', $_POST['email'], $uid);\n$stmt->execute();", "expected": "none"}
+{"snippet": "$allowed = ['en', 'fr', 'de'];\n$lang = in_array($_GET['lang'], $allowed, true) ? $_GET['lang'] : 'en';\nrequire \"lang/{$lang}.php\";", "expected": "none"}
+{"snippet": "function renderComment(array $c) {\n    printf('<p>%s</p>', htmlspecialchars($c['body'], ENT_QUOTES, 'UTF-8'));\n}", "expected": "none"}
