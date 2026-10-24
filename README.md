@@ -27,6 +27,8 @@ Datasets: `data/<lane>/seed.jsonl` (10 per label) and `holdout.jsonl` (4 per lab
 
 ## Setup
 
+**Rebuilding in a new Mubit account?** Follow [docs/REBUILD.md](docs/REBUILD.md), or ask Claude Code to use the `rebuild-mubit-adapters` skill. `scripts/rebuild_all.sh` sends every lane's data.
+
 ```sh
 python3 -m venv .venv
 .venv/bin/pip install openai anthropic
