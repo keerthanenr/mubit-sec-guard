@@ -224,7 +224,10 @@ class HookTest(unittest.TestCase):
     def test_ask_mode_hands_decision_to_user(self):
         result = self.run_hook(payload("Write", "/proj/login.php", content=SQLI), GUARD_MODE="ask")
         self.assertEqual(result.returncode, 0)
-        out = json.loads(result.stdout)["hookSpecificOutput"]
+        full = json.loads(result.stdout)
+        self.assertIn("Security concern: guard: sql_injection", full["systemMessage"])
+        self.assertIn("Save it anyway?", full["systemMessage"])
+        out = full["hookSpecificOutput"]
         self.assertEqual(out["permissionDecision"], "ask")
         self.assertIn("Use prepared statements", out["permissionDecisionReason"])
         self.assertEqual(self.findings()[-1]["decision"], "ask")

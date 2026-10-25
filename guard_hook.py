@@ -208,7 +208,10 @@ def _report(mode, findings, file_path, redacted):
         output = {"systemMessage": "⚠ " + text,
                   "hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": text}}
     else:
-        output = {"hookSpecificOutput": {"hookEventName": "PreToolUse",
+        # The permission dialog's title is Claude Code's own ("Do you want to overwrite…?") and it
+        # may not show the reason prominently, so also show the concern as its own line.
+        output = {"systemMessage": f"⚠ Security concern: {text}\nSave it anyway? Choose Yes to save, No to stop it.",
+                  "hookSpecificOutput": {"hookEventName": "PreToolUse",
                                          "permissionDecision": "ask",
                                          "permissionDecisionReason": text}}
     print(json.dumps(output))

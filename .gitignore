@@ -20,3 +20,4 @@ spend.tmp
 .python-version
 
 demo-video/
+findings.*.jsonl
