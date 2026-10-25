@@ -4,6 +4,10 @@ An AI code-security guard for the Night Shift × Mubit hackathon (London, 23–2
 
 A Claude Code PreToolUse hook scans code as the agent writes it and blocks insecure writes. It classifies each write with an LLM call routed through Mubit. Each OWASP-style **lane** has its own fixed system prompt, so each lane becomes its own Mubit task and trains its own small adapter. Over time the guard should get cheaper and faster.
 
+## Demo video
+
+[Watch or download the VulHawk demo](docs/vulhawk-demo.mp4) (1 min 58 sec).
+
 ## VulHawk website and pitch
 
 The product website and six-slide pitch deck are in [`frontend/`](frontend/README.md). Preview them locally:
