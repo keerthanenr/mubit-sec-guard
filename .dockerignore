@@ -13,3 +13,9 @@ spend.json
 spend.lock
 spend.tmp
 .guard_state.json
+.vulhawk-keys
+.claude
+frontend
+assets
+demo-video
+*.mp4
