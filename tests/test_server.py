@@ -83,12 +83,13 @@ class ServerTest(unittest.TestCase):
 class _FakeGuard(BaseHTTPRequestHandler):
     requests = []
     reply = {"decision": "allow", "findings": []}
+    status = 200
 
     def do_POST(self):
         body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
         _FakeGuard.requests.append((self.headers.get("Authorization"), body))
         out = json.dumps(_FakeGuard.reply).encode()
-        self.send_response(200)
+        self.send_response(_FakeGuard.status)
         self.send_header("Content-Type", "application/json")
         self.end_headers()
         self.wfile.write(out)
@@ -108,14 +109,16 @@ class RemoteClientTest(unittest.TestCase):
     def tearDownClass(cls):
         cls.server.shutdown()
 
-    def run_client(self, payload, url=None):
-        env = {**os.environ, "GUARD_URL": url or self.url, "GUARD_KEY": "k1"}
+    def run_client(self, payload, url=None, key="k1"):
+        env = {**os.environ, "GUARD_URL": url or self.url, "GUARD_KEY": key}
         env.pop("GUARD_DISABLED", None)
         return subprocess.run([sys.executable, str(ROOT / "client" / "guard_remote.py")],
                               input=json.dumps(payload), capture_output=True, text=True, env=env, timeout=30)
 
     def setUp(self):
         _FakeGuard.requests.clear()
+        _FakeGuard.status = 200
+        _FakeGuard.reply = {"decision": "allow", "findings": []}
 
     def test_block_shows_label_and_skill_link(self):
         _FakeGuard.reply = {"decision": "block", "findings": [{
@@ -139,6 +142,31 @@ class RemoteClientTest(unittest.TestCase):
         down = self.run_client({"tool_name": "Write", "tool_input": {"file_path": "/p/a.php", "content": SQLI}},
                                url="http://127.0.0.1:9")
         self.assertEqual((ok.returncode, down.returncode), (0, 0))
+        self.assertEqual(ok.stdout, "")
+        self.assertIn("NOT checked", json.loads(down.stdout)["systemMessage"])
+
+    def test_key_with_en_dash_warns_instead_of_failing_silently(self):
+        # What `sh -s – KEY` (an auto-corrected "--") used to save as the key.
+        for key in ("\u2013", "\u2013vh_abc", "vh_abc def"):
+            r = self.run_client({"tool_name": "Write", "tool_input": {"file_path": "/p/a.php", "content": SQLI}},
+                                key=key)
+            self.assertEqual(r.returncode, 0, key)
+            message = json.loads(r.stdout)["systemMessage"]
+            self.assertIn("NOT checked", message)
+            self.assertIn("sh -s -- YOUR_KEY", message)
+        self.assertEqual(_FakeGuard.requests, [])
+
+    def test_quoted_key_in_config_is_unwrapped(self):
+        r = self.run_client({"tool_name": "Write", "tool_input": {"file_path": "/p/a.php", "content": SAFE}},
+                            key=' "k1" ')
+        self.assertEqual((r.returncode, r.stdout), (0, ""))
+        self.assertEqual(_FakeGuard.requests[0][0], "Bearer k1")
+
+    def test_rejected_key_is_reported(self):
+        _FakeGuard.status = 401
+        r = self.run_client({"tool_name": "Write", "tool_input": {"file_path": "/p/a.php", "content": SQLI}})
+        self.assertEqual(r.returncode, 0)
+        self.assertIn("rejected your key", json.loads(r.stdout)["systemMessage"])
 
 
 if __name__ == "__main__":
@@ -180,6 +208,17 @@ class InstallerTest(unittest.TestCase):
                 config = Path(home, ".config", "vulhawk", "config")
                 self.assertEqual(config.read_text(), f"GUARD_URL={url}\nGUARD_KEY=vh_test_key\n")
                 self.assertEqual(oct(config.stat().st_mode & 0o777), "0o600")
+
+                r = subprocess.run(["sh", "-s", "\u2013", "vh_dash_key"], input=script, cwd=project,
+                                   capture_output=True, text=True, env=env, timeout=60)
+                self.assertEqual(r.returncode, 0, r.stderr)
+                self.assertEqual(config.read_text(), f"GUARD_URL={url}\nGUARD_KEY=vh_dash_key\n")
+
+                r = subprocess.run(["sh", "-s", "--", "vh_\u2019bad"], input=script, cwd=project,
+                                   capture_output=True, text=True, env=env, timeout=60)
+                self.assertEqual(r.returncode, 1)
+                self.assertIn("sh -s -- YOUR_KEY", r.stdout)
+                self.assertEqual(config.read_text(), f"GUARD_URL={url}\nGUARD_KEY=vh_dash_key\n")
         finally:
             files.shutdown()
 

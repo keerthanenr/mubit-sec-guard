@@ -2,8 +2,19 @@
 # VulHawk installer. Run from your project folder:
 #   curl -fsSL __URL__/install | sh -s -- YOUR_VULHAWK_KEY
 set -eu
+LC_ALL=C  # byte-wise pattern matching for the key check below
 URL="__URL__"
+# Chat apps and docs often auto-correct "--" into an en or em dash, which sh then passes as
+# the first argument. Skip it so the real key is used.
+case "${1:-}" in "–"|"—"|"-") shift ;; esac
 KEY="${1:-${GUARD_KEY:-}}"
+# A key is plain ASCII letters, digits, '.', '_' or '-'; anything else breaks every request.
+case "$KEY" in
+  *[!A-Za-z0-9._-]*)
+    echo "That key has a character a VulHawk key can't contain (often a dash or quote from copy-paste)."
+    echo "Re-run, typing the two hyphens yourself:  curl -fsSL $URL/install | sh -s -- YOUR_KEY"
+    exit 1 ;;
+esac
 
 command -v python3 >/dev/null 2>&1 || { echo "VulHawk needs python3."; exit 1; }
 mkdir -p .claude
